@@ -14,7 +14,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { uploadMealImage } from "@/lib/storage";
 import { MealImage } from "@/components/MealImage";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
+import { StatusBadge, StatusControl, StatusFilterTabs, type ContentStatus } from "@/components/admin/StatusControl";
 
 type Item = {
   id: string;
@@ -32,6 +33,7 @@ type Item = {
   tags: string[] | null;
   category: string | null;
   is_active: boolean;
+  status: ContentStatus;
 };
 
 export const Route = createFileRoute("/_authenticated/admin/menu")({
@@ -42,7 +44,7 @@ const FOOD_TYPES = ["veg", "non-veg", "egg", "jain"] as const;
 const TAG_OPTIONS = ["keto", "high-protein", "low-carb", "gluten-free"];
 
 function emptyItem(): Partial<Item> {
-  return { name: "", description: "", price_inr: 0, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0, food_type: "veg", allergens: [], tags: [], category: "", is_active: true, image_url: "" };
+  return { name: "", description: "", price_inr: 0, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0, food_type: "veg", allergens: [], tags: [], category: "", status: "active", image_url: "" };
 }
 
 function MenuPage() {
@@ -50,6 +52,7 @@ function MenuPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Item> | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [filter, setFilter] = useState<ContentStatus | "all">("active");
 
   const items = useQuery({
     queryKey: ["menu_items"],
@@ -76,12 +79,12 @@ function MenuPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("menu_items").delete().eq("id", id);
+  const setStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: ContentStatus }) => {
+      const { error } = await supabase.from("menu_items").update({ status }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); toast.success("Deleted"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); toast.success("Status updated"); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -110,6 +113,12 @@ function MenuPage() {
           <h1 className="font-display text-3xl font-bold">Menu Items</h1>
           <p className="text-muted-foreground">Hero photo, macros, food type and tags.</p>
         </div>
+        <StatusFilterTabs value={filter} onChange={setFilter} counts={{
+          all: items.data?.length,
+          active: items.data?.filter((p) => p.status === "active").length,
+          inactive: items.data?.filter((p) => p.status === "inactive").length,
+          archived: items.data?.filter((p) => p.status === "archived").length,
+        }} />
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => setEditing(emptyItem())}><Plus className="h-4 w-4 mr-2" /> New item</Button>
@@ -162,9 +171,16 @@ function MenuPage() {
                   })}
                 </div>
               </div>
-              <div className="md:col-span-2 flex items-center gap-2">
-                <Switch checked={!!editing?.is_active} onCheckedChange={(v) => setEditing({ ...editing, is_active: v })} />
-                <Label>Active (visible to customers)</Label>
+              <div className="md:col-span-2 flex items-center gap-3">
+                <Label>Status</Label>
+                <Select value={editing?.status ?? "active"} onValueChange={(v) => setEditing({ ...editing, status: v as ContentStatus })}>
+                  <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>
