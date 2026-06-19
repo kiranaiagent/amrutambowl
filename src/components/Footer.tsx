@@ -4,12 +4,12 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-4 py-8 text-sm text-muted-foreground">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <div className="font-display text-base font-semibold text-foreground">Ruchi Bowl</div>
+            <div className="font-display text-base font-semibold text-foreground">Amrutam</div>
             <div>Healthy tiffins, delivered daily across India.</div>
           </div>
           <div className="space-y-1 md:text-right">
             <div>FSSAI License No.: <span className="font-medium text-foreground">12345678901234</span></div>
-            <div>© {new Date().getFullYear()} Ruchi Bowl. All prices include 5% GST.</div>
+            <div>© {new Date().getFullYear()} Amrutam. All prices include 5% GST.</div>
           </div>
         </div>
       </div>
