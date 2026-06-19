@@ -9,12 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PlansRouteImport } from './routes/plans'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as BowlRouteImport } from './routes/bowl'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PlansIndexRouteImport } from './routes/plans.index'
 import { Route as PlansIdRouteImport } from './routes/plans.$id'
 import { Route as AuthenticatedMySubscriptionRouteImport } from './routes/_authenticated/my-subscription'
 import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
@@ -27,11 +27,6 @@ import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminMenuRouteImport } from './routes/_authenticated/admin/menu'
 import { Route as AuthenticatedAdminAddonsRouteImport } from './routes/_authenticated/admin/addons'
 
-const PlansRoute = PlansRouteImport.update({
-  id: '/plans',
-  path: '/plans',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CartRoute = CartRouteImport.update({
   id: '/cart',
   path: '/cart',
@@ -56,10 +51,15 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlansIndexRoute = PlansIndexRouteImport.update({
+  id: '/plans/',
+  path: '/plans/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlansIdRoute = PlansIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => PlansRoute,
+  id: '/plans/$id',
+  path: '/plans/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedMySubscriptionRoute =
   AuthenticatedMySubscriptionRouteImport.update({
@@ -121,12 +121,12 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/bowl': typeof BowlRoute
   '/cart': typeof CartRoute
-  '/plans': typeof PlansRouteWithChildren
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/my-subscription': typeof AuthenticatedMySubscriptionRoute
   '/plans/$id': typeof PlansIdRoute
+  '/plans/': typeof PlansIndexRoute
   '/admin/addons': typeof AuthenticatedAdminAddonsRoute
   '/admin/menu': typeof AuthenticatedAdminMenuRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
@@ -139,11 +139,11 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/bowl': typeof BowlRoute
   '/cart': typeof CartRoute
-  '/plans': typeof PlansRouteWithChildren
   '/account': typeof AuthenticatedAccountRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/my-subscription': typeof AuthenticatedMySubscriptionRoute
   '/plans/$id': typeof PlansIdRoute
+  '/plans': typeof PlansIndexRoute
   '/admin/addons': typeof AuthenticatedAdminAddonsRoute
   '/admin/menu': typeof AuthenticatedAdminMenuRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
@@ -158,12 +158,12 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/bowl': typeof BowlRoute
   '/cart': typeof CartRoute
-  '/plans': typeof PlansRouteWithChildren
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
   '/_authenticated/my-subscription': typeof AuthenticatedMySubscriptionRoute
   '/plans/$id': typeof PlansIdRoute
+  '/plans/': typeof PlansIndexRoute
   '/_authenticated/admin/addons': typeof AuthenticatedAdminAddonsRoute
   '/_authenticated/admin/menu': typeof AuthenticatedAdminMenuRoute
   '/_authenticated/admin/orders': typeof AuthenticatedAdminOrdersRoute
@@ -178,12 +178,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bowl'
     | '/cart'
-    | '/plans'
     | '/account'
     | '/admin'
     | '/checkout'
     | '/my-subscription'
     | '/plans/$id'
+    | '/plans/'
     | '/admin/addons'
     | '/admin/menu'
     | '/admin/orders'
@@ -196,11 +196,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bowl'
     | '/cart'
-    | '/plans'
     | '/account'
     | '/checkout'
     | '/my-subscription'
     | '/plans/$id'
+    | '/plans'
     | '/admin/addons'
     | '/admin/menu'
     | '/admin/orders'
@@ -214,12 +214,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bowl'
     | '/cart'
-    | '/plans'
     | '/_authenticated/account'
     | '/_authenticated/admin'
     | '/_authenticated/checkout'
     | '/_authenticated/my-subscription'
     | '/plans/$id'
+    | '/plans/'
     | '/_authenticated/admin/addons'
     | '/_authenticated/admin/menu'
     | '/_authenticated/admin/orders'
@@ -234,18 +234,12 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BowlRoute: typeof BowlRoute
   CartRoute: typeof CartRoute
-  PlansRoute: typeof PlansRouteWithChildren
+  PlansIdRoute: typeof PlansIdRoute
+  PlansIndexRoute: typeof PlansIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/plans': {
-      id: '/plans'
-      path: '/plans'
-      fullPath: '/plans'
-      preLoaderRoute: typeof PlansRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/cart': {
       id: '/cart'
       path: '/cart'
@@ -281,12 +275,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/plans/': {
+      id: '/plans/'
+      path: '/plans'
+      fullPath: '/plans/'
+      preLoaderRoute: typeof PlansIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/plans/$id': {
       id: '/plans/$id'
-      path: '/$id'
+      path: '/plans/$id'
       fullPath: '/plans/$id'
       preLoaderRoute: typeof PlansIdRouteImport
-      parentRoute: typeof PlansRoute
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/my-subscription': {
       id: '/_authenticated/my-subscription'
@@ -399,34 +400,15 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
-interface PlansRouteChildren {
-  PlansIdRoute: typeof PlansIdRoute
-}
-
-const PlansRouteChildren: PlansRouteChildren = {
-  PlansIdRoute: PlansIdRoute,
-}
-
-const PlansRouteWithChildren = PlansRoute._addFileChildren(PlansRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   BowlRoute: BowlRoute,
   CartRoute: CartRoute,
-  PlansRoute: PlansRouteWithChildren,
+  PlansIdRoute: PlansIdRoute,
+  PlansIndexRoute: PlansIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

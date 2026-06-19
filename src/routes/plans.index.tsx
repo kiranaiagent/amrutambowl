@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/plans")({
+export const Route = createFileRoute("/plans/")({
   head: () => ({
     meta: [
       { title: "Meal Plans — Amrutam" },
