@@ -53,6 +53,18 @@ function Checkout() {
   const [avoidAllergens, setAvoidAllergens] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [addonQty, setAddonQty] = useState<Record<string, number>>({});
+  const [planOverrides, setPlanOverrides] = useState<Override[]>([]);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(OVERRIDE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed?.planId === planId && Array.isArray(parsed.overrides)) {
+        setPlanOverrides(parsed.overrides);
+      }
+    } catch {}
+  }, [planId]);
 
   const planQ = useQuery({
     queryKey: ["plan", planId],
