@@ -15,11 +15,12 @@ function Account() {
         <h1 className="font-display text-2xl font-bold">My Account</h1>
         <p className="mt-2 text-sm text-muted-foreground">{user?.email}</p>
         <div className="mt-6 flex flex-wrap gap-3">
-          {isAdmin && <Link to="/admin"><Button>Open Admin</Button></Link>}
+          <Link to="/my-subscription"><Button>My Orders & Subscription</Button></Link>
+          {isAdmin && <Link to="/admin"><Button variant="secondary">Open Admin</Button></Link>}
           <Link to="/"><Button variant="secondary">Home</Button></Link>
           <Button variant="destructive" onClick={signOut}>Sign out</Button>
         </div>
-        <p className="mt-6 text-xs text-muted-foreground">My Subscription page (pause / skip / cancel) comes with the customer flow.</p>
+        <p className="mt-6 text-xs text-muted-foreground">Razorpay UPI Autopay & invoice downloads come next.</p>
       </Card>
     </div>
   );

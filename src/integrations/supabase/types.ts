@@ -74,36 +74,96 @@ export type Database = {
         }
         Relationships: []
       }
-      orders: {
+      order_items: {
         Row: {
           created_at: string
-          delivery_date: string
           id: string
-          notes: string | null
-          slot: Database["public"]["Enums"]["delivery_slot"]
-          status: Database["public"]["Enums"]["order_status"]
-          subscription_id: string
-          updated_at: string
+          menu_item_id: string | null
+          name: string
+          order_id: string
+          price_inr: number
+          qty: number
         }
         Insert: {
           created_at?: string
-          delivery_date: string
           id?: string
-          notes?: string | null
-          slot: Database["public"]["Enums"]["delivery_slot"]
-          status?: Database["public"]["Enums"]["order_status"]
-          subscription_id: string
-          updated_at?: string
+          menu_item_id?: string | null
+          name: string
+          order_id: string
+          price_inr?: number
+          qty?: number
         }
         Update: {
           created_at?: string
-          delivery_date?: string
           id?: string
+          menu_item_id?: string | null
+          name?: string
+          order_id?: string
+          price_inr?: number
+          qty?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          delivery_address: string | null
+          delivery_date: string
+          delivery_pincode: string | null
+          id: string
+          kind: string
+          notes: string | null
+          slot: Database["public"]["Enums"]["delivery_slot"]
+          status: Database["public"]["Enums"]["order_status"]
+          subscription_id: string | null
+          total_inr: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          delivery_address?: string | null
+          delivery_date: string
+          delivery_pincode?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          slot: Database["public"]["Enums"]["delivery_slot"]
+          status?: Database["public"]["Enums"]["order_status"]
+          subscription_id?: string | null
+          total_inr?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          delivery_address?: string | null
+          delivery_date?: string
+          delivery_pincode?: string | null
+          id?: string
+          kind?: string
           notes?: string | null
           slot?: Database["public"]["Enums"]["delivery_slot"]
           status?: Database["public"]["Enums"]["order_status"]
-          subscription_id?: string
+          subscription_id?: string | null
+          total_inr?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {

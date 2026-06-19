@@ -10,7 +10,8 @@ import { useAuth } from "@/lib/auth";
 import { useEffect } from "react";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign in — FitTiffin" }] }),
+  head: () => ({ meta: [{ title: "Sign in — Ruchi Bowl" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({ redirect: typeof s.redirect === "string" ? s.redirect : undefined }),
   component: AuthPage,
 });
 
@@ -22,13 +23,15 @@ function AuthPage() {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { redirect } = Route.useSearch();
   const { user, isAdmin, loading: authLoading } = useAuth();
 
   useEffect(() => {
     if (!authLoading && user) {
-      navigate({ to: isAdmin ? "/admin" : "/", replace: true });
+      const to = redirect || (isAdmin ? "/admin" : "/");
+      navigate({ to, replace: true });
     }
-  }, [authLoading, user, isAdmin, navigate]);
+  }, [authLoading, user, isAdmin, navigate, redirect]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +57,7 @@ function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary/40 px-4">
       <Card className="w-full max-w-md p-8">
-        <Link to="/" className="font-display text-2xl font-bold text-primary">FitTiffin</Link>
+        <Link to="/" className="font-display text-2xl font-bold text-primary">Ruchi Bowl</Link>
         <h1 className="mt-4 font-display text-2xl font-bold">
           {mode === "signin" ? "Welcome back" : "Create your account"}
         </h1>
