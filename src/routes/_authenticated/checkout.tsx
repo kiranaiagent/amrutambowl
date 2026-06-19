@@ -203,11 +203,32 @@ function Checkout() {
         const { data: planItems } = await supabase
           .from("plan_items").select("day_of_week, slot, menu_items(*)").eq("plan_id", planQ.data.id);
 
+        // Build override lookup + fetch any swapped-in menu items
+        const overrideMap = new Map<string, string | null>();
+        planOverrides.forEach((o) => overrideMap.set(`${o.day}-${o.slot}`, o.menu_item_id));
+        const swapInIds = planOverrides.map((o) => o.menu_item_id).filter((x): x is string => !!x);
+        let swapItemsById = new Map<string, any>();
+        if (swapInIds.length) {
+          const { data: swapItems } = await supabase.from("menu_items").select("*").in("id", swapInIds);
+          (swapItems ?? []).forEach((it: any) => swapItemsById.set(it.id, it));
+        }
+
         for (const dateStr of selectedDates) {
           const d = new Date(dateStr);
           const dow = d.getDay() === 0 ? 7 : d.getDay();
           const slotItems = (planItems ?? []).filter((pi: any) => pi.day_of_week === dow && pi.slot === slot);
-          const items = slotItems.map((pi: any) => pi.menu_items).filter(Boolean);
+          let items = slotItems.map((pi: any) => pi.menu_items).filter(Boolean);
+
+          // Apply customer overrides for this day/slot
+          const key = `${dow}-${slot}`;
+          if (overrideMap.has(key)) {
+            const overrideId = overrideMap.get(key);
+            if (overrideId === null) items = []; // skipped
+            else {
+              const swap = swapItemsById.get(overrideId);
+              items = swap ? [swap] : items;
+            }
+          }
 
           // filter out items that conflict with allergens
           const filtered = items.filter((it: any) =>
