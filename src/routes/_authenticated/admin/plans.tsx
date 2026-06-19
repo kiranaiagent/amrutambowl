@@ -13,7 +13,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { uploadMealImage } from "@/lib/storage";
 import { MealImage } from "@/components/MealImage";
-import { Pencil, Plus, Trash2, Settings2 } from "lucide-react";
+import { Pencil, Plus, Settings2 } from "lucide-react";
+import { StatusBadge, StatusControl, StatusFilterTabs, type ContentStatus } from "@/components/admin/StatusControl";
 
 type Plan = {
   id: string;
@@ -26,6 +27,7 @@ type Plan = {
   billing_cycle: "weekly" | "monthly";
   price_inr: number;
   is_active: boolean;
+  status: ContentStatus;
 };
 
 export const Route = createFileRoute("/_authenticated/admin/plans")({
@@ -36,7 +38,7 @@ const GOALS = ["weight-loss", "muscle-gain", "balanced", "keto"] as const;
 const CYCLES = ["weekly", "monthly"] as const;
 
 function emptyPlan(): Partial<Plan> {
-  return { name: "", description: "", goal_type: "balanced", meals_per_day: 2, days_per_week: 5, billing_cycle: "weekly", price_inr: 0, is_active: true, image_url: "" };
+  return { name: "", description: "", goal_type: "balanced", meals_per_day: 2, days_per_week: 5, billing_cycle: "weekly", price_inr: 0, status: "active", image_url: "" };
 }
 
 function PlansPage() {
@@ -45,6 +47,7 @@ function PlansPage() {
   const [editing, setEditing] = useState<Partial<Plan> | null>(null);
   const [builderFor, setBuilderFor] = useState<Plan | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [filter, setFilter] = useState<ContentStatus | "all">("active");
 
   const plans = useQuery({
     queryKey: ["plans"],
