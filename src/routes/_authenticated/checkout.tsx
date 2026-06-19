@@ -290,6 +290,13 @@ function Checkout() {
         <h1 className="font-display text-3xl font-bold">Checkout</h1>
         <p className="text-muted-foreground">{isPlan ? planQ.data?.name : "Build Your Bowl order"}</p>
 
+        {isPlan && planOverrides.length > 0 && (
+          <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+            <span className="font-medium text-primary">Custom menu applied</span>
+            <span className="text-muted-foreground"> · {planOverrides.length} meal change{planOverrides.length === 1 ? "" : "s"} will be used for every matching day.</span>
+          </div>
+        )}
+
         <Card className="mt-6 p-5 space-y-5">
           {/* Delivery */}
           <div>
