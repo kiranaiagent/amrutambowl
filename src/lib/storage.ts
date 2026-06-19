@@ -6,6 +6,7 @@ export const MEAL_BUCKET = "meal-images";
 export async function signedMealUrl(path: string | null | undefined): Promise<string | null> {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
+  if (path.startsWith("/")) return path; // CDN-relative (e.g. Lovable Assets /__l5e/...)
   const { data } = await supabase.storage.from(MEAL_BUCKET).createSignedUrl(path, 60 * 60);
   return data?.signedUrl ?? null;
 }
