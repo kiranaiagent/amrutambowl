@@ -22,14 +22,14 @@ function Home() {
   const featured = useQuery({
     queryKey: ["home-meals"],
     queryFn: async () => {
-      const { data } = await supabase.from("menu_items").select("*").eq("is_active", true).limit(6);
+      const { data } = await supabase.from("menu_items").select("*").eq("status", "active").limit(6);
       return data ?? [];
     },
   });
   const plans = useQuery({
     queryKey: ["home-plans"],
     queryFn: async () => {
-      const { data } = await supabase.from("plans").select("*").eq("is_active", true).limit(4);
+      const { data } = await supabase.from("plans").select("*").eq("status", "active").limit(4);
       return data ?? [];
     },
   });

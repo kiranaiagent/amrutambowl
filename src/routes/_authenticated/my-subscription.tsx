@@ -48,7 +48,7 @@ function MyPage() {
   const menuQ = useQuery({
     queryKey: ["menu-public"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("menu_items").select("*").eq("is_active", true).order("name");
+      const { data, error } = await supabase.from("menu_items").select("*").eq("status", "active").order("name");
       if (error) throw error;
       return data as any[];
     },
