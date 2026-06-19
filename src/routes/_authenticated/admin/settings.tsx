@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,10 +28,9 @@ function SettingsPage() {
     whatsapp_prefill: "",
   });
 
-  // hydrate form once on load
-  useState(() => {
+  useEffect(() => {
     if (settings) setForm(settings);
-  });
+  }, [settings]);
 
   const current = settings ?? DEFAULT_SETTINGS;
 
