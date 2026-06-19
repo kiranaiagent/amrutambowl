@@ -85,7 +85,7 @@ function Checkout() {
   const addonsQ = useQuery({
     queryKey: ["addons-public"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("add_ons").select("*").eq("is_active", true).order("category");
+      const { data, error } = await supabase.from("add_ons").select("*").eq("status", "active").order("category");
       if (error) throw error;
       return data;
     },
