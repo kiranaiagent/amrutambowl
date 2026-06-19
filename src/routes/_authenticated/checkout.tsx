@@ -217,7 +217,7 @@ function Checkout() {
           const d = new Date(dateStr);
           const dow = d.getDay() === 0 ? 7 : d.getDay();
           const slotItems = (planItems ?? []).filter((pi: any) => pi.day_of_week === dow && pi.slot === slot);
-          let items = slotItems.map((pi: any) => pi.menu_items).filter(Boolean);
+          let items = slotItems.map((pi: any) => pi.menu_items).filter((mi: any) => mi && mi.status === "active");
 
           // Apply customer overrides for this day/slot
           const key = `${dow}-${slot}`;
