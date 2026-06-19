@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
+import { CartProvider } from "@/lib/cart";
 import { SupportFab } from "@/components/SupportFab";
 import { Toaster } from "sonner";
 
@@ -80,9 +81,11 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Outlet />
-        <SupportFab />
-        <Toaster richColors position="top-center" />
+        <CartProvider>
+          <Outlet />
+          <SupportFab />
+          <Toaster richColors position="top-center" />
+        </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
