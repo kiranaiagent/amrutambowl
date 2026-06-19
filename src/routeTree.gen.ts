@@ -9,9 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PlansRouteImport } from './routes/plans'
+import { Route as CartRouteImport } from './routes/cart'
+import { Route as BowlRouteImport } from './routes/bowl'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PlansIdRouteImport } from './routes/plans.$id'
+import { Route as AuthenticatedMySubscriptionRouteImport } from './routes/_authenticated/my-subscription'
+import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
@@ -20,6 +26,21 @@ import { Route as AuthenticatedAdminPincodesRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenticated/admin/orders'
 import { Route as AuthenticatedAdminMenuRouteImport } from './routes/_authenticated/admin/menu'
 
+const PlansRoute = PlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CartRoute = CartRouteImport.update({
+  id: '/cart',
+  path: '/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BowlRoute = BowlRouteImport.update({
+  id: '/bowl',
+  path: '/bowl',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -33,6 +54,22 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PlansIdRoute = PlansIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => PlansRoute,
+} as any)
+const AuthenticatedMySubscriptionRoute =
+  AuthenticatedMySubscriptionRouteImport.update({
+    id: '/my-subscription',
+    path: '/my-subscription',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCheckoutRoute = AuthenticatedCheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
@@ -75,8 +112,14 @@ const AuthenticatedAdminMenuRoute = AuthenticatedAdminMenuRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/bowl': typeof BowlRoute
+  '/cart': typeof CartRoute
+  '/plans': typeof PlansRouteWithChildren
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/checkout': typeof AuthenticatedCheckoutRoute
+  '/my-subscription': typeof AuthenticatedMySubscriptionRoute
+  '/plans/$id': typeof PlansIdRoute
   '/admin/menu': typeof AuthenticatedAdminMenuRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/pincodes': typeof AuthenticatedAdminPincodesRoute
@@ -86,7 +129,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/bowl': typeof BowlRoute
+  '/cart': typeof CartRoute
+  '/plans': typeof PlansRouteWithChildren
   '/account': typeof AuthenticatedAccountRoute
+  '/checkout': typeof AuthenticatedCheckoutRoute
+  '/my-subscription': typeof AuthenticatedMySubscriptionRoute
+  '/plans/$id': typeof PlansIdRoute
   '/admin/menu': typeof AuthenticatedAdminMenuRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/pincodes': typeof AuthenticatedAdminPincodesRoute
@@ -98,8 +147,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/bowl': typeof BowlRoute
+  '/cart': typeof CartRoute
+  '/plans': typeof PlansRouteWithChildren
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
+  '/_authenticated/my-subscription': typeof AuthenticatedMySubscriptionRoute
+  '/plans/$id': typeof PlansIdRoute
   '/_authenticated/admin/menu': typeof AuthenticatedAdminMenuRoute
   '/_authenticated/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/_authenticated/admin/pincodes': typeof AuthenticatedAdminPincodesRoute
@@ -111,8 +166,14 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/bowl'
+    | '/cart'
+    | '/plans'
     | '/account'
     | '/admin'
+    | '/checkout'
+    | '/my-subscription'
+    | '/plans/$id'
     | '/admin/menu'
     | '/admin/orders'
     | '/admin/pincodes'
@@ -122,7 +183,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/bowl'
+    | '/cart'
+    | '/plans'
     | '/account'
+    | '/checkout'
+    | '/my-subscription'
+    | '/plans/$id'
     | '/admin/menu'
     | '/admin/orders'
     | '/admin/pincodes'
@@ -133,8 +200,14 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/bowl'
+    | '/cart'
+    | '/plans'
     | '/_authenticated/account'
     | '/_authenticated/admin'
+    | '/_authenticated/checkout'
+    | '/_authenticated/my-subscription'
+    | '/plans/$id'
     | '/_authenticated/admin/menu'
     | '/_authenticated/admin/orders'
     | '/_authenticated/admin/pincodes'
@@ -146,10 +219,34 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BowlRoute: typeof BowlRoute
+  CartRoute: typeof CartRoute
+  PlansRoute: typeof PlansRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/plans': {
+      id: '/plans'
+      path: '/plans'
+      fullPath: '/plans'
+      preLoaderRoute: typeof PlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bowl': {
+      id: '/bowl'
+      path: '/bowl'
+      fullPath: '/bowl'
+      preLoaderRoute: typeof BowlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -170,6 +267,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/plans/$id': {
+      id: '/plans/$id'
+      path: '/$id'
+      fullPath: '/plans/$id'
+      preLoaderRoute: typeof PlansIdRouteImport
+      parentRoute: typeof PlansRoute
+    }
+    '/_authenticated/my-subscription': {
+      id: '/_authenticated/my-subscription'
+      path: '/my-subscription'
+      fullPath: '/my-subscription'
+      preLoaderRoute: typeof AuthenticatedMySubscriptionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/checkout': {
+      id: '/_authenticated/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof AuthenticatedCheckoutRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
@@ -245,20 +363,37 @@ const AuthenticatedAdminRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
+  AuthenticatedMySubscriptionRoute: typeof AuthenticatedMySubscriptionRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
+  AuthenticatedMySubscriptionRoute: AuthenticatedMySubscriptionRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface PlansRouteChildren {
+  PlansIdRoute: typeof PlansIdRoute
+}
+
+const PlansRouteChildren: PlansRouteChildren = {
+  PlansIdRoute: PlansIdRoute,
+}
+
+const PlansRouteWithChildren = PlansRoute._addFileChildren(PlansRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  BowlRoute: BowlRoute,
+  CartRoute: CartRoute,
+  PlansRoute: PlansRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
