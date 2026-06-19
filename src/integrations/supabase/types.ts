@@ -26,6 +26,7 @@ export type Database = {
           is_active: boolean
           name: string
           price_inr: number
+          status: Database["public"]["Enums"]["content_status"]
           updated_at: string
         }
         Insert: {
@@ -39,6 +40,7 @@ export type Database = {
           is_active?: boolean
           name: string
           price_inr?: number
+          status?: Database["public"]["Enums"]["content_status"]
           updated_at?: string
         }
         Update: {
@@ -52,6 +54,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           price_inr?: number
+          status?: Database["public"]["Enums"]["content_status"]
           updated_at?: string
         }
         Relationships: []
@@ -73,6 +76,7 @@ export type Database = {
           name: string
           price_inr: number
           protein_g: number
+          status: Database["public"]["Enums"]["content_status"]
           tags: string[] | null
           updated_at: string
         }
@@ -92,6 +96,7 @@ export type Database = {
           name: string
           price_inr?: number
           protein_g?: number
+          status?: Database["public"]["Enums"]["content_status"]
           tags?: string[] | null
           updated_at?: string
         }
@@ -111,6 +116,7 @@ export type Database = {
           name?: string
           price_inr?: number
           protein_g?: number
+          status?: Database["public"]["Enums"]["content_status"]
           tags?: string[] | null
           updated_at?: string
         }
@@ -316,6 +322,7 @@ export type Database = {
           meals_per_day: number
           name: string
           price_inr: number
+          status: Database["public"]["Enums"]["content_status"]
           updated_at: string
         }
         Insert: {
@@ -330,6 +337,7 @@ export type Database = {
           meals_per_day?: number
           name: string
           price_inr?: number
+          status?: Database["public"]["Enums"]["content_status"]
           updated_at?: string
         }
         Update: {
@@ -344,6 +352,7 @@ export type Database = {
           meals_per_day?: number
           name?: string
           price_inr?: number
+          status?: Database["public"]["Enums"]["content_status"]
           updated_at?: string
         }
         Relationships: []
@@ -607,6 +616,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "customer"
       billing_cycle: "weekly" | "monthly" | "daily" | "custom_dates"
+      content_status: "active" | "inactive" | "archived"
       delivery_slot: "breakfast" | "lunch" | "dinner"
       food_type: "veg" | "non-veg" | "egg" | "jain"
       goal_type: "weight-loss" | "muscle-gain" | "balanced" | "keto"
@@ -742,6 +752,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "customer"],
       billing_cycle: ["weekly", "monthly", "daily", "custom_dates"],
+      content_status: ["active", "inactive", "archived"],
       delivery_slot: ["breakfast", "lunch", "dinner"],
       food_type: ["veg", "non-veg", "egg", "jain"],
       goal_type: ["weight-loss", "muscle-gain", "balanced", "keto"],
