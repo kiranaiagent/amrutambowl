@@ -14,7 +14,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { uploadMealImage } from "@/lib/storage";
 import { MealImage } from "@/components/MealImage";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
+import { StatusBadge, StatusControl, StatusFilterTabs, type ContentStatus } from "@/components/admin/StatusControl";
 
 type Item = {
   id: string;
@@ -32,6 +33,7 @@ type Item = {
   tags: string[] | null;
   category: string | null;
   is_active: boolean;
+  status: ContentStatus;
 };
 
 export const Route = createFileRoute("/_authenticated/admin/menu")({
@@ -42,7 +44,7 @@ const FOOD_TYPES = ["veg", "non-veg", "egg", "jain"] as const;
 const TAG_OPTIONS = ["keto", "high-protein", "low-carb", "gluten-free"];
 
 function emptyItem(): Partial<Item> {
-  return { name: "", description: "", price_inr: 0, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0, food_type: "veg", allergens: [], tags: [], category: "", is_active: true, image_url: "" };
+  return { name: "", description: "", price_inr: 0, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0, food_type: "veg", allergens: [], tags: [], category: "", status: "active", image_url: "" };
 }
 
 function MenuPage() {
@@ -50,6 +52,7 @@ function MenuPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Item> | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [filter, setFilter] = useState<ContentStatus | "all">("active");
 
   const items = useQuery({
     queryKey: ["menu_items"],
@@ -76,12 +79,12 @@ function MenuPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const del = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("menu_items").delete().eq("id", id);
+  const setStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: ContentStatus }) => {
+      const { error } = await supabase.from("menu_items").update({ status }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); toast.success("Deleted"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); toast.success("Status updated"); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -110,6 +113,12 @@ function MenuPage() {
           <h1 className="font-display text-3xl font-bold">Menu Items</h1>
           <p className="text-muted-foreground">Hero photo, macros, food type and tags.</p>
         </div>
+        <StatusFilterTabs value={filter} onChange={setFilter} counts={{
+          all: items.data?.length,
+          active: items.data?.filter((p) => p.status === "active").length,
+          inactive: items.data?.filter((p) => p.status === "inactive").length,
+          archived: items.data?.filter((p) => p.status === "archived").length,
+        }} />
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => setEditing(emptyItem())}><Plus className="h-4 w-4 mr-2" /> New item</Button>
@@ -162,9 +171,16 @@ function MenuPage() {
                   })}
                 </div>
               </div>
-              <div className="md:col-span-2 flex items-center gap-2">
-                <Switch checked={!!editing?.is_active} onCheckedChange={(v) => setEditing({ ...editing, is_active: v })} />
-                <Label>Active (visible to customers)</Label>
+              <div className="md:col-span-2 flex items-center gap-3">
+                <Label>Status</Label>
+                <Select value={editing?.status ?? "active"} onValueChange={(v) => setEditing({ ...editing, status: v as ContentStatus })}>
+                  <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>
@@ -178,8 +194,8 @@ function MenuPage() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items.isLoading && <p className="text-muted-foreground">Loading…</p>}
         {items.data?.length === 0 && <p className="text-muted-foreground">No menu items yet. Create your first one above.</p>}
-        {items.data?.map((it) => (
-          <Card key={it.id} className="overflow-hidden flex flex-col">
+        {items.data?.filter((it) => filter === "all" || it.status === filter).map((it) => (
+          <Card key={it.id} className={`overflow-hidden flex flex-col ${it.status === "archived" ? "opacity-60" : ""}`}>
             <MealImage path={it.image_url} alt={it.name} className="h-44 w-full object-cover" />
             <div className="p-4 flex-1 flex flex-col">
               <div className="flex items-start justify-between gap-2">
@@ -189,10 +205,10 @@ function MenuPage() {
                     <h3 className="font-semibold">{it.name}</h3>
                   </div>
                   {it.category && <div className="text-xs text-muted-foreground">{it.category}</div>}
+                  <div className="mt-1"><StatusBadge status={it.status} /></div>
                 </div>
                 <div className="text-right">
                   <div className="font-bold">₹{Number(it.price_inr).toFixed(0)}</div>
-                  {!it.is_active && <Badge variant="secondary" className="mt-1">Inactive</Badge>}
                 </div>
               </div>
               <div className="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
@@ -206,11 +222,11 @@ function MenuPage() {
                   {it.tags.map((t) => <Badge key={t} variant="outline" className="text-xs">{t}</Badge>)}
                 </div>
               )}
-              <div className="mt-4 flex gap-2 pt-3 border-t">
+              <div className="mt-4 flex gap-2 pt-3 border-t items-center">
                 <Button size="sm" variant="ghost" onClick={() => { setEditing(it); setOpen(true); }}><Pencil className="h-4 w-4 mr-1" />Edit</Button>
-                <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete this item?")) del.mutate(it.id); }}>
-                  <Trash2 className="h-4 w-4 mr-1 text-destructive" />Delete
-                </Button>
+                <div className="ml-auto">
+                  <StatusControl status={it.status} label="item" onChange={(s) => setStatus.mutate({ id: it.id, status: s })} />
+                </div>
               </div>
             </div>
           </Card>

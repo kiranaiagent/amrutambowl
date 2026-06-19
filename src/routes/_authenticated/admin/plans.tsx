@@ -13,7 +13,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { uploadMealImage } from "@/lib/storage";
 import { MealImage } from "@/components/MealImage";
-import { Pencil, Plus, Trash2, Settings2 } from "lucide-react";
+import { Pencil, Plus, Settings2 } from "lucide-react";
+import { StatusBadge, StatusControl, StatusFilterTabs, type ContentStatus } from "@/components/admin/StatusControl";
 
 type Plan = {
   id: string;
@@ -26,6 +27,7 @@ type Plan = {
   billing_cycle: "weekly" | "monthly";
   price_inr: number;
   is_active: boolean;
+  status: ContentStatus;
 };
 
 export const Route = createFileRoute("/_authenticated/admin/plans")({
@@ -36,7 +38,7 @@ const GOALS = ["weight-loss", "muscle-gain", "balanced", "keto"] as const;
 const CYCLES = ["weekly", "monthly"] as const;
 
 function emptyPlan(): Partial<Plan> {
-  return { name: "", description: "", goal_type: "balanced", meals_per_day: 2, days_per_week: 5, billing_cycle: "weekly", price_inr: 0, is_active: true, image_url: "" };
+  return { name: "", description: "", goal_type: "balanced", meals_per_day: 2, days_per_week: 5, billing_cycle: "weekly", price_inr: 0, status: "active", image_url: "" };
 }
 
 function PlansPage() {
@@ -45,6 +47,7 @@ function PlansPage() {
   const [editing, setEditing] = useState<Partial<Plan> | null>(null);
   const [builderFor, setBuilderFor] = useState<Plan | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [filter, setFilter] = useState<ContentStatus | "all">("active");
 
   const plans = useQuery({
     queryKey: ["plans"],
@@ -65,9 +68,12 @@ function PlansPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const del = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from("plans").delete().eq("id", id); if (error) throw error; },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["plans"] }); toast.success("Deleted"); },
+  const setStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: ContentStatus }) => {
+      const { error } = await supabase.from("plans").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["plans"] }); toast.success("Status updated"); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -83,6 +89,14 @@ function PlansPage() {
         <div>
           <h1 className="font-display text-3xl font-bold">Plans</h1>
           <p className="text-muted-foreground">Define subscription plans, then build their weekly menu.</p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <StatusFilterTabs value={filter} onChange={setFilter} counts={{
+            all: plans.data?.length,
+            active: plans.data?.filter((p) => p.status === "active").length,
+            inactive: plans.data?.filter((p) => p.status === "inactive").length,
+            archived: plans.data?.filter((p) => p.status === "archived").length,
+          }} />
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -117,9 +131,16 @@ function PlansPage() {
               <div><Label>Meals / day</Label><Input type="number" min={1} max={3} value={editing?.meals_per_day ?? 2} onChange={(e) => setEditing({ ...editing, meals_per_day: +e.target.value })} /></div>
               <div><Label>Days / week</Label><Input type="number" min={1} max={7} value={editing?.days_per_week ?? 5} onChange={(e) => setEditing({ ...editing, days_per_week: +e.target.value })} /></div>
               <div className="md:col-span-2"><Label>Price (₹ incl. GST)</Label><Input type="number" step="0.01" value={editing?.price_inr ?? 0} onChange={(e) => setEditing({ ...editing, price_inr: +e.target.value })} /></div>
-              <div className="md:col-span-2 flex items-center gap-2">
-                <Switch checked={!!editing?.is_active} onCheckedChange={(v) => setEditing({ ...editing, is_active: v })} />
-                <Label>Active</Label>
+              <div className="md:col-span-2 flex items-center gap-3">
+                <Label>Status</Label>
+                <Select value={editing?.status ?? "active"} onValueChange={(v) => setEditing({ ...editing, status: v as ContentStatus })}>
+                  <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>
@@ -132,14 +153,15 @@ function PlansPage() {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {plans.data?.length === 0 && <p className="text-muted-foreground">No plans yet.</p>}
-        {plans.data?.map((p) => (
-          <Card key={p.id} className="overflow-hidden flex flex-col">
+        {plans.data?.filter((p) => filter === "all" || p.status === filter).map((p) => (
+          <Card key={p.id} className={`overflow-hidden flex flex-col ${p.status === "archived" ? "opacity-60" : ""}`}>
             <MealImage path={p.image_url} alt={p.name} className="h-36 w-full object-cover" />
             <div className="p-4 flex-1 flex flex-col">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-2">
                 <div>
                   <h3 className="font-semibold">{p.name}</h3>
                   <div className="text-xs text-muted-foreground capitalize">{p.goal_type.replace("-", " ")} · {p.billing_cycle}</div>
+                  <div className="mt-1"><StatusBadge status={p.status} /></div>
                 </div>
                 <div className="text-right">
                   <div className="font-bold">₹{Number(p.price_inr).toFixed(0)}</div>
@@ -148,12 +170,12 @@ function PlansPage() {
               </div>
               <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{p.description}</p>
               <div className="mt-3 text-xs text-muted-foreground">{p.meals_per_day} meals/day · {p.days_per_week} days/week</div>
-              <div className="mt-4 flex gap-2 pt-3 border-t flex-wrap">
+              <div className="mt-4 flex gap-2 pt-3 border-t flex-wrap items-center">
                 <Button size="sm" variant="secondary" onClick={() => setBuilderFor(p)}><Settings2 className="h-4 w-4 mr-1" />Weekly menu</Button>
                 <Button size="sm" variant="ghost" onClick={() => { setEditing(p); setOpen(true); }}><Pencil className="h-4 w-4 mr-1" />Edit</Button>
-                <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete plan?")) del.mutate(p.id); }}>
-                  <Trash2 className="h-4 w-4 mr-1 text-destructive" />
-                </Button>
+                <div className="ml-auto">
+                  <StatusControl status={p.status} label="plan" onChange={(s) => setStatus.mutate({ id: p.id, status: s })} />
+                </div>
               </div>
             </div>
           </Card>
