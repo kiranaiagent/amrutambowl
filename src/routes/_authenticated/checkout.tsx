@@ -276,6 +276,7 @@ function Checkout() {
     onSuccess: (r) => {
       toast.success("Order placed! 🎉");
       if (r.kind === "bowl") clear();
+      try { sessionStorage.removeItem(OVERRIDE_KEY); } catch {}
       if (user) supabase.from("profiles").update({ pincode }).eq("id", user.id);
       nav({ to: "/my-subscription" });
     },
