@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      add_ons: {
+        Row: {
+          allergens: string[] | null
+          category: string
+          created_at: string
+          description: string | null
+          food_type: Database["public"]["Enums"]["food_type"]
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          price_inr: number
+          updated_at: string
+        }
+        Insert: {
+          allergens?: string[] | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          food_type?: Database["public"]["Enums"]["food_type"]
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          price_inr?: number
+          updated_at?: string
+        }
+        Update: {
+          allergens?: string[] | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          food_type?: Database["public"]["Enums"]["food_type"]
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          price_inr?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       menu_items: {
         Row: {
           allergens: string[] | null
@@ -369,53 +411,149 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_addons: {
+        Row: {
+          addon_id: string
+          created_at: string
+          id: string
+          qty: number
+          subscription_id: string
+        }
+        Insert: {
+          addon_id: string
+          created_at?: string
+          id?: string
+          qty?: number
+          subscription_id: string
+        }
+        Update: {
+          addon_id?: string
+          created_at?: string
+          id?: string
+          qty?: number
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_addons_addon_id_fkey"
+            columns: ["addon_id"]
+            isOneToOne: false
+            referencedRelation: "add_ons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_addons_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_swaps: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          id: string
+          note: string | null
+          slot: Database["public"]["Enums"]["delivery_slot"]
+          subscription_id: string
+          swap_menu_item_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          id?: string
+          note?: string | null
+          slot: Database["public"]["Enums"]["delivery_slot"]
+          subscription_id: string
+          swap_menu_item_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          id?: string
+          note?: string | null
+          slot?: Database["public"]["Enums"]["delivery_slot"]
+          subscription_id?: string
+          swap_menu_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_swaps_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_swaps_swap_menu_item_id_fkey"
+            columns: ["swap_menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
+          avoid_allergens: string[] | null
           created_at: string
           days_per_week: number
           delivery_address: string | null
           delivery_pincode: string | null
           delivery_slot: Database["public"]["Enums"]["delivery_slot"] | null
+          end_date: string | null
           id: string
           meals_per_day: number
           next_billing_date: string | null
           plan_id: string
           portion_size: string | null
           razorpay_subscription_id: string | null
+          selected_dates: string[] | null
+          special_instructions: string | null
           start_date: string
           status: Database["public"]["Enums"]["sub_status"]
           updated_at: string
           user_id: string
         }
         Insert: {
+          avoid_allergens?: string[] | null
           created_at?: string
           days_per_week?: number
           delivery_address?: string | null
           delivery_pincode?: string | null
           delivery_slot?: Database["public"]["Enums"]["delivery_slot"] | null
+          end_date?: string | null
           id?: string
           meals_per_day?: number
           next_billing_date?: string | null
           plan_id: string
           portion_size?: string | null
           razorpay_subscription_id?: string | null
+          selected_dates?: string[] | null
+          special_instructions?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["sub_status"]
           updated_at?: string
           user_id: string
         }
         Update: {
+          avoid_allergens?: string[] | null
           created_at?: string
           days_per_week?: number
           delivery_address?: string | null
           delivery_pincode?: string | null
           delivery_slot?: Database["public"]["Enums"]["delivery_slot"] | null
+          end_date?: string | null
           id?: string
           meals_per_day?: number
           next_billing_date?: string | null
           plan_id?: string
           portion_size?: string | null
           razorpay_subscription_id?: string | null
+          selected_dates?: string[] | null
+          special_instructions?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["sub_status"]
           updated_at?: string
@@ -468,7 +606,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "customer"
-      billing_cycle: "weekly" | "monthly"
+      billing_cycle: "weekly" | "monthly" | "daily" | "custom_dates"
       delivery_slot: "breakfast" | "lunch" | "dinner"
       food_type: "veg" | "non-veg" | "egg" | "jain"
       goal_type: "weight-loss" | "muscle-gain" | "balanced" | "keto"
@@ -603,7 +741,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "customer"],
-      billing_cycle: ["weekly", "monthly"],
+      billing_cycle: ["weekly", "monthly", "daily", "custom_dates"],
       delivery_slot: ["breakfast", "lunch", "dinner"],
       food_type: ["veg", "non-veg", "egg", "jain"],
       goal_type: ["weight-loss", "muscle-gain", "balanced", "keto"],
