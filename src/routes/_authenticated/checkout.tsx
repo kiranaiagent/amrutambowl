@@ -111,7 +111,7 @@ function Checkout() {
           const { data: ord, error: oErr } = await supabase
             .from("orders")
             .insert({
-              subscription_id: sub.id, user_id: user.id, delivery_date, slot: s,
+              subscription_id: sub.id, user_id: user.id, delivery_date, slot: s as "breakfast" | "lunch" | "dinner",
               status: "preparing", kind: "subscription",
               delivery_address: address, delivery_pincode: pincode, total_inr,
             })
