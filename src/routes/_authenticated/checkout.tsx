@@ -26,6 +26,8 @@ export const Route = createFileRoute("/_authenticated/checkout")({
 const SLOTS: Array<"breakfast" | "lunch" | "dinner"> = ["breakfast", "lunch", "dinner"];
 const ALLERGENS = ["dairy", "gluten", "nuts", "soy", "egg", "seafood", "onion-garlic"];
 type Cycle = "weekly" | "monthly" | "daily" | "custom_dates";
+const OVERRIDE_KEY = "ruchi.plan.overrides.v1";
+type Override = { day: number; slot: string; menu_item_id: string | null };
 
 function todayStr(offset = 0) {
   const d = new Date(); d.setDate(d.getDate() + offset);
