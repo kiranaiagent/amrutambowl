@@ -194,8 +194,8 @@ function MenuPage() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items.isLoading && <p className="text-muted-foreground">Loading…</p>}
         {items.data?.length === 0 && <p className="text-muted-foreground">No menu items yet. Create your first one above.</p>}
-        {items.data?.map((it) => (
-          <Card key={it.id} className="overflow-hidden flex flex-col">
+        {items.data?.filter((it) => filter === "all" || it.status === filter).map((it) => (
+          <Card key={it.id} className={`overflow-hidden flex flex-col ${it.status === "archived" ? "opacity-60" : ""}`}>
             <MealImage path={it.image_url} alt={it.name} className="h-44 w-full object-cover" />
             <div className="p-4 flex-1 flex flex-col">
               <div className="flex items-start justify-between gap-2">
@@ -205,10 +205,10 @@ function MenuPage() {
                     <h3 className="font-semibold">{it.name}</h3>
                   </div>
                   {it.category && <div className="text-xs text-muted-foreground">{it.category}</div>}
+                  <div className="mt-1"><StatusBadge status={it.status} /></div>
                 </div>
                 <div className="text-right">
                   <div className="font-bold">₹{Number(it.price_inr).toFixed(0)}</div>
-                  {!it.is_active && <Badge variant="secondary" className="mt-1">Inactive</Badge>}
                 </div>
               </div>
               <div className="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
@@ -222,11 +222,11 @@ function MenuPage() {
                   {it.tags.map((t) => <Badge key={t} variant="outline" className="text-xs">{t}</Badge>)}
                 </div>
               )}
-              <div className="mt-4 flex gap-2 pt-3 border-t">
+              <div className="mt-4 flex gap-2 pt-3 border-t items-center">
                 <Button size="sm" variant="ghost" onClick={() => { setEditing(it); setOpen(true); }}><Pencil className="h-4 w-4 mr-1" />Edit</Button>
-                <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete this item?")) del.mutate(it.id); }}>
-                  <Trash2 className="h-4 w-4 mr-1 text-destructive" />Delete
-                </Button>
+                <div className="ml-auto">
+                  <StatusControl status={it.status} label="item" onChange={(s) => setStatus.mutate({ id: it.id, status: s })} />
+                </div>
               </div>
             </div>
           </Card>
