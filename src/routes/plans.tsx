@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/plans")({
   head: () => ({
     meta: [
-      { title: "Meal Plans — Ruchi Bowl" },
+      { title: "Meal Plans — Amrutam" },
       { name: "description", content: "Weekly chef-crafted meal plans for weight loss, muscle gain, balanced and keto goals." },
     ],
   }),
