@@ -23,7 +23,7 @@ function PlansPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["plans-public"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("plans").select("*").eq("is_active", true).order("price_inr");
+      const { data, error } = await supabase.from("plans").select("*").eq("status", "active").order("price_inr");
       if (error) throw error;
       return data;
     },
