@@ -225,7 +225,7 @@ function Checkout() {
             const overrideId = overrideMap.get(key);
             if (overrideId === null) items = []; // skipped
             else {
-              const swap = swapItemsById.get(overrideId);
+              const swap = overrideId ? swapItemsById.get(overrideId) : null;
               items = swap ? [swap] : items;
             }
           }
