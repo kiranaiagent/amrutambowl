@@ -56,7 +56,7 @@ function PlanDetail() {
   const menuQ = useQuery({
     queryKey: ["menu-active"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("menu_items").select("*").eq("is_active", true).order("name");
+      const { data, error } = await supabase.from("menu_items").select("*").eq("status", "active").order("name");
       if (error) throw error;
       return data as any[];
     },
@@ -64,7 +64,11 @@ function PlanDetail() {
 
   const stdGrid = useMemo(() => {
     const g: Record<string, any> = {};
-    (itemsQ.data ?? []).forEach((r) => { g[`${r.day_of_week}-${r.slot}`] = r.menu_items; });
+    (itemsQ.data ?? []).forEach((r) => {
+      const mi = r.menu_items;
+      if (!mi || mi.status !== "active") return; // skip inactive/archived items
+      g[`${r.day_of_week}-${r.slot}`] = mi;
+    });
     return g;
   }, [itemsQ.data]);
 
