@@ -26,6 +26,8 @@ export const Route = createFileRoute("/_authenticated/checkout")({
 const SLOTS: Array<"breakfast" | "lunch" | "dinner"> = ["breakfast", "lunch", "dinner"];
 const ALLERGENS = ["dairy", "gluten", "nuts", "soy", "egg", "seafood", "onion-garlic"];
 type Cycle = "weekly" | "monthly" | "daily" | "custom_dates";
+const OVERRIDE_KEY = "ruchi.plan.overrides.v1";
+type Override = { day: number; slot: string; menu_item_id: string | null };
 
 function todayStr(offset = 0) {
   const d = new Date(); d.setDate(d.getDate() + offset);
@@ -51,6 +53,18 @@ function Checkout() {
   const [avoidAllergens, setAvoidAllergens] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [addonQty, setAddonQty] = useState<Record<string, number>>({});
+  const [planOverrides, setPlanOverrides] = useState<Override[]>([]);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(OVERRIDE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed?.planId === planId && Array.isArray(parsed.overrides)) {
+        setPlanOverrides(parsed.overrides);
+      }
+    } catch {}
+  }, [planId]);
 
   const planQ = useQuery({
     queryKey: ["plan", planId],
@@ -189,11 +203,32 @@ function Checkout() {
         const { data: planItems } = await supabase
           .from("plan_items").select("day_of_week, slot, menu_items(*)").eq("plan_id", planQ.data.id);
 
+        // Build override lookup + fetch any swapped-in menu items
+        const overrideMap = new Map<string, string | null>();
+        planOverrides.forEach((o) => overrideMap.set(`${o.day}-${o.slot}`, o.menu_item_id));
+        const swapInIds = planOverrides.map((o) => o.menu_item_id).filter((x): x is string => !!x);
+        let swapItemsById = new Map<string, any>();
+        if (swapInIds.length) {
+          const { data: swapItems } = await supabase.from("menu_items").select("*").in("id", swapInIds);
+          (swapItems ?? []).forEach((it: any) => swapItemsById.set(it.id, it));
+        }
+
         for (const dateStr of selectedDates) {
           const d = new Date(dateStr);
           const dow = d.getDay() === 0 ? 7 : d.getDay();
           const slotItems = (planItems ?? []).filter((pi: any) => pi.day_of_week === dow && pi.slot === slot);
-          const items = slotItems.map((pi: any) => pi.menu_items).filter(Boolean);
+          let items = slotItems.map((pi: any) => pi.menu_items).filter(Boolean);
+
+          // Apply customer overrides for this day/slot
+          const key = `${dow}-${slot}`;
+          if (overrideMap.has(key)) {
+            const overrideId = overrideMap.get(key);
+            if (overrideId === null) items = []; // skipped
+            else {
+              const swap = overrideId ? swapItemsById.get(overrideId) : null;
+              items = swap ? [swap] : items;
+            }
+          }
 
           // filter out items that conflict with allergens
           const filtered = items.filter((it: any) =>
@@ -241,6 +276,7 @@ function Checkout() {
     onSuccess: (r) => {
       toast.success("Order placed! 🎉");
       if (r.kind === "bowl") clear();
+      try { sessionStorage.removeItem(OVERRIDE_KEY); } catch {}
       if (user) supabase.from("profiles").update({ pincode }).eq("id", user.id);
       nav({ to: "/my-subscription" });
     },
@@ -253,6 +289,13 @@ function Checkout() {
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
         <h1 className="font-display text-3xl font-bold">Checkout</h1>
         <p className="text-muted-foreground">{isPlan ? planQ.data?.name : "Build Your Bowl order"}</p>
+
+        {isPlan && planOverrides.length > 0 && (
+          <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+            <span className="font-medium text-primary">Custom menu applied</span>
+            <span className="text-muted-foreground"> · {planOverrides.length} meal change{planOverrides.length === 1 ? "" : "s"} will be used for every matching day.</span>
+          </div>
+        )}
 
         <Card className="mt-6 p-5 space-y-5">
           {/* Delivery */}
