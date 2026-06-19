@@ -11,7 +11,7 @@ import { Leaf, Dumbbell, Flame, Heart, Sparkles, Truck, ShieldCheck } from "luci
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Ruchi Bowl — Healthy Meal Subscriptions in India" },
+      { title: "Amrutam — Healthy Meal Subscriptions in India" },
       { name: "description", content: "Chef-crafted, macro-balanced tiffins delivered daily. Veg & non-veg plans for weight loss, muscle gain, balanced and keto." },
     ],
   }),
@@ -41,9 +41,9 @@ function Home() {
       <section className="relative overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
         <div className="mx-auto max-w-6xl px-4 py-16 md:py-24 text-primary-foreground">
           <h1 className="font-display text-4xl md:text-6xl font-bold leading-tight max-w-2xl">
-            Ruchiga Tinandi. <br /> Aarogyam ga Undandi.
+            Aaharame Aarogyam
           </h1>
-          <p className="mt-2 text-base md:text-lg opacity-90 italic">Eat tasty. Stay fit & strong.</p>
+          <p className="mt-2 text-base md:text-lg opacity-90 italic">Eat Healthy. Stay Fit &amp; Strong.</p>
           <p className="mt-4 max-w-xl text-lg opacity-90">
             Macro-balanced tiffins, chef-crafted with Telugu &amp; pan-Indian flavours. Subscribe weekly or build your own bowl.
           </p>

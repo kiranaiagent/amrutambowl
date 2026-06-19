@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { useEffect } from "react";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign in — Ruchi Bowl" }] }),
+  head: () => ({ meta: [{ title: "Sign in — Amrutam" }] }),
   validateSearch: (s: Record<string, unknown>) => ({ redirect: typeof s.redirect === "string" ? s.redirect : undefined }),
   component: AuthPage,
 });
@@ -57,7 +57,7 @@ function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary/40 px-4">
       <Card className="w-full max-w-md p-8">
-        <Link to="/" className="font-display text-2xl font-bold text-primary">Ruchi Bowl</Link>
+        <Link to="/" className="font-display text-2xl font-bold text-primary">Amrutam</Link>
         <h1 className="mt-4 font-display text-2xl font-bold">
           {mode === "signin" ? "Welcome back" : "Create your account"}
         </h1>

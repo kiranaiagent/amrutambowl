@@ -51,7 +51,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "FitTiffin — Healthy Meal Subscriptions in India" },
+      { title: "Amrutam — Healthy Meal Subscriptions in India" },
       { name: "description", content: "Chef-crafted, macro-balanced meal subscriptions delivered daily. Veg & non-veg plans for weight loss, muscle gain, balanced and keto." },
     ],
     links: [

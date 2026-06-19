@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { Plus, Minus, Filter } from "lucide-react";
 
 export const Route = createFileRoute("/bowl")({
-  head: () => ({ meta: [{ title: "Build a Bowl — Ruchi Bowl" }, { name: "description", content: "Pick your own healthy meals. Add to bowl, customize portion, checkout." }] }),
+  head: () => ({ meta: [{ title: "Build a Bowl — Amrutam" }, { name: "description", content: "Pick your own healthy meals. Add to bowl, customize portion, checkout." }] }),
   component: BowlPage,
   errorComponent: ({ error }) => <div className="p-8">Couldn't load menu: {error.message}</div>,
 });
