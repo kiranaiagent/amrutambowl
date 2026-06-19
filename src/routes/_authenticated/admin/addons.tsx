@@ -167,24 +167,24 @@ function AddonsPage() {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {list.data?.length === 0 && <p className="text-muted-foreground">No add-ons yet.</p>}
-        {list.data?.map((a) => (
-          <Card key={a.id} className="overflow-hidden flex flex-col">
+        {list.data?.filter((a) => filter === "all" || a.status === filter).map((a) => (
+          <Card key={a.id} className={`overflow-hidden flex flex-col ${a.status === "archived" ? "opacity-60" : ""}`}>
             <MealImage path={a.image_url} alt={a.name} className="h-32 w-full object-cover" />
             <div className="p-4 flex-1 flex flex-col">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h3 className="font-semibold">{a.name}</h3>
                   <div className="text-xs text-muted-foreground capitalize">{a.category} · {a.food_type}</div>
+                  <div className="mt-1"><StatusBadge status={a.status} /></div>
                 </div>
                 <div className="font-bold">₹{Number(a.price_inr).toFixed(0)}</div>
               </div>
               {a.description && <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{a.description}</p>}
-              {!a.is_active && <div className="mt-1 text-xs text-amber-600">Inactive</div>}
-              <div className="mt-3 flex gap-2 pt-3 border-t">
+              <div className="mt-3 flex gap-2 pt-3 border-t items-center">
                 <Button size="sm" variant="ghost" onClick={() => { setEditing(a); setOpen(true); }}><Pencil className="h-4 w-4 mr-1" />Edit</Button>
-                <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete add-on?")) del.mutate(a.id); }}>
-                  <Trash2 className="h-4 w-4 mr-1 text-destructive" />
-                </Button>
+                <div className="ml-auto">
+                  <StatusControl status={a.status} label="add-on" onChange={(s) => setStatus.mutate({ id: a.id, status: s })} />
+                </div>
               </div>
             </div>
           </Card>
