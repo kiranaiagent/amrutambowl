@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
-import { ChefHat, UtensilsCrossed, MapPin, ClipboardList, LogOut, ShieldCheck } from "lucide-react";
+import { ChefHat, UtensilsCrossed, MapPin, ClipboardList, LogOut, ShieldCheck, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
@@ -14,6 +14,7 @@ const NAV = [
   { to: "/admin", label: "Dashboard", icon: ShieldCheck, exact: true },
   { to: "/admin/menu", label: "Menu Items", icon: UtensilsCrossed },
   { to: "/admin/plans", label: "Plans", icon: ChefHat },
+  { to: "/admin/addons", label: "Add-ons", icon: Plus },
   { to: "/admin/pincodes", label: "Pincodes", icon: MapPin },
   { to: "/admin/orders", label: "Orders", icon: ClipboardList },
 ];
