@@ -188,7 +188,7 @@ function PlanMenuBuilder({ plan, onClose }: { plan: Plan; onClose: () => void })
   });
 
   const setCell = useMutation({
-    mutationFn: async ({ day, slot, menu_item_id }: { day: number; slot: string; menu_item_id: string | null }) => {
+    mutationFn: async ({ day, slot, menu_item_id }: { day: number; slot: typeof SLOTS[number]; menu_item_id: string | null }) => {
       const existing = planItems.data?.find((pi) => pi.day_of_week === day && pi.slot === slot);
       if (menu_item_id === null) {
         if (existing) {
