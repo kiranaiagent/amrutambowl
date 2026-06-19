@@ -153,14 +153,15 @@ function PlansPage() {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {plans.data?.length === 0 && <p className="text-muted-foreground">No plans yet.</p>}
-        {plans.data?.map((p) => (
-          <Card key={p.id} className="overflow-hidden flex flex-col">
+        {plans.data?.filter((p) => filter === "all" || p.status === filter).map((p) => (
+          <Card key={p.id} className={`overflow-hidden flex flex-col ${p.status === "archived" ? "opacity-60" : ""}`}>
             <MealImage path={p.image_url} alt={p.name} className="h-36 w-full object-cover" />
             <div className="p-4 flex-1 flex flex-col">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-2">
                 <div>
                   <h3 className="font-semibold">{p.name}</h3>
                   <div className="text-xs text-muted-foreground capitalize">{p.goal_type.replace("-", " ")} · {p.billing_cycle}</div>
+                  <div className="mt-1"><StatusBadge status={p.status} /></div>
                 </div>
                 <div className="text-right">
                   <div className="font-bold">₹{Number(p.price_inr).toFixed(0)}</div>
@@ -169,12 +170,12 @@ function PlansPage() {
               </div>
               <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{p.description}</p>
               <div className="mt-3 text-xs text-muted-foreground">{p.meals_per_day} meals/day · {p.days_per_week} days/week</div>
-              <div className="mt-4 flex gap-2 pt-3 border-t flex-wrap">
+              <div className="mt-4 flex gap-2 pt-3 border-t flex-wrap items-center">
                 <Button size="sm" variant="secondary" onClick={() => setBuilderFor(p)}><Settings2 className="h-4 w-4 mr-1" />Weekly menu</Button>
                 <Button size="sm" variant="ghost" onClick={() => { setEditing(p); setOpen(true); }}><Pencil className="h-4 w-4 mr-1" />Edit</Button>
-                <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete plan?")) del.mutate(p.id); }}>
-                  <Trash2 className="h-4 w-4 mr-1 text-destructive" />
-                </Button>
+                <div className="ml-auto">
+                  <StatusControl status={p.status} label="plan" onChange={(s) => setStatus.mutate({ id: p.id, status: s })} />
+                </div>
               </div>
             </div>
           </Card>
