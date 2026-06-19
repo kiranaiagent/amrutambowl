@@ -13,7 +13,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { uploadMealImage } from "@/lib/storage";
 import { MealImage } from "@/components/MealImage";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
+import { StatusBadge, StatusControl, StatusFilterTabs, type ContentStatus } from "@/components/admin/StatusControl";
 
 type Addon = {
   id: string;
@@ -25,6 +26,7 @@ type Addon = {
   food_type: "veg" | "non-veg" | "egg" | "jain";
   allergens: string[] | null;
   is_active: boolean;
+  status: ContentStatus;
 };
 
 export const Route = createFileRoute("/_authenticated/admin/addons")({
@@ -36,7 +38,7 @@ const FOODS = ["veg", "non-veg", "egg", "jain"] as const;
 const ALLERGENS = ["dairy", "gluten", "nuts", "soy", "egg", "seafood"];
 
 function empty(): Partial<Addon> {
-  return { name: "", description: "", price_inr: 0, category: "extra", food_type: "veg", allergens: [], is_active: true, image_url: "" };
+  return { name: "", description: "", price_inr: 0, category: "extra", food_type: "veg", allergens: [], status: "active", image_url: "" };
 }
 
 function AddonsPage() {
@@ -44,6 +46,7 @@ function AddonsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Addon> | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [filter, setFilter] = useState<ContentStatus | "all">("active");
 
   const list = useQuery({
     queryKey: ["addons-admin"],
@@ -64,9 +67,12 @@ function AddonsPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const del = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from("add_ons").delete().eq("id", id); if (error) throw error; },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["addons-admin"] }); toast.success("Deleted"); },
+  const setStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: ContentStatus }) => {
+      const { error } = await supabase.from("add_ons").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["addons-admin"] }); toast.success("Status updated"); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -88,6 +94,12 @@ function AddonsPage() {
           <h1 className="font-display text-3xl font-bold">Add-ons</h1>
           <p className="text-muted-foreground">Extras customers can attach to a subscription (chapatis, drinks, fruits, eggs, paneer, etc.).</p>
         </div>
+        <StatusFilterTabs value={filter} onChange={setFilter} counts={{
+          all: list.data?.length,
+          active: list.data?.filter((p) => p.status === "active").length,
+          inactive: list.data?.filter((p) => p.status === "inactive").length,
+          archived: list.data?.filter((p) => p.status === "archived").length,
+        }} />
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => setEditing(empty())}><Plus className="h-4 w-4 mr-2" />New add-on</Button>
@@ -133,9 +145,16 @@ function AddonsPage() {
                   })}
                 </div>
               </div>
-              <div className="md:col-span-2 flex items-center gap-2">
-                <Switch checked={!!editing?.is_active} onCheckedChange={(v) => setEditing({ ...editing, is_active: v })} />
-                <Label>Active</Label>
+              <div className="md:col-span-2 flex items-center gap-3">
+                <Label>Status</Label>
+                <Select value={editing?.status ?? "active"} onValueChange={(v) => setEditing({ ...editing, status: v as ContentStatus })}>
+                  <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>
