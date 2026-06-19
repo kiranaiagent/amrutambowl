@@ -52,7 +52,7 @@ function AdminLayout() {
     <div className="min-h-screen flex flex-col md:flex-row">
       <aside className="md:w-60 border-b md:border-b-0 md:border-r bg-card">
         <div className="p-4">
-          <Link to="/" className="font-display text-xl font-bold text-primary">FitTiffin</Link>
+          <Link to="/" className="font-display text-xl font-bold text-primary">Amrutam</Link>
           <div className="text-xs text-muted-foreground">Admin Console</div>
         </div>
         <nav className="flex md:flex-col gap-1 px-2 overflow-x-auto md:overflow-visible pb-3">
