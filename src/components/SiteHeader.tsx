@@ -21,9 +21,9 @@ export function SiteHeader() {
               </span>
             )}
           </Link>
-          {user && (
+          {user && isAdmin && (
             <Link to="/admin" className="hidden sm:inline rounded-md bg-secondary px-3 py-1.5 font-medium">
-              {isAdmin ? "Admin" : "Claim Admin"}
+              Admin
             </Link>
           )}
           {user ? (

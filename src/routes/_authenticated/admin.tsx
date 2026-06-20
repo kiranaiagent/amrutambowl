@@ -1,9 +1,6 @@
 import { createFileRoute, Outlet, Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useState } from "react";
 import { ChefHat, UtensilsCrossed, MapPin, ClipboardList, LogOut, ShieldCheck, Plus, Settings } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -21,31 +18,20 @@ const NAV = [
 ];
 
 function AdminLayout() {
-  const { isAdmin, signOut, refreshRole, user } = useAuth();
+  const { isAdmin, signOut, user } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [claiming, setClaiming] = useState(false);
-
-  const claim = async () => {
-    setClaiming(true);
-    const { data, error } = await supabase.rpc("claim_admin_if_none");
-    setClaiming(false);
-    if (error) return toast.error(error.message);
-    if (data) { toast.success("You're now an admin!"); await refreshRole(); }
-    else toast.error("An admin already exists. Ask them to add you.");
-  };
 
   if (!isAdmin) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <ShieldCheck className="mx-auto h-12 w-12 text-primary" />
+        <ShieldCheck className="mx-auto h-12 w-12 text-muted-foreground" />
         <h1 className="mt-4 font-display text-2xl font-bold">Admin access required</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          You're signed in as <span className="font-medium">{user?.email}</span>. If you're the first admin, claim the role:
+          You're signed in as <span className="font-medium">{user?.email}</span>. This area is restricted to administrators. Please contact an existing admin to be granted access.
         </p>
-        <Button onClick={claim} disabled={claiming} className="mt-4">
-          {claiming ? "Claiming…" : "Claim admin role"}
-        </Button>
-        <p className="mt-3 text-xs text-muted-foreground">Only works if no admin exists yet.</p>
+        <Link to="/" className="mt-4 inline-block">
+          <Button variant="secondary">Back to home</Button>
+        </Link>
       </div>
     );
   }
