@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { ChefHat, UtensilsCrossed, MapPin, ClipboardList, LogOut, ShieldCheck, Plus, Settings, Users } from "lucide-react";
+import { ChefHat, UtensilsCrossed, MapPin, ClipboardList, LogOut, ShieldCheck, Plus, Settings, Users, CalendarDays } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
@@ -14,6 +14,7 @@ const NAV = [
   { to: "/admin/addons", label: "Add-ons", icon: Plus },
   { to: "/admin/pincodes", label: "Pincodes", icon: MapPin },
   { to: "/admin/orders", label: "Orders", icon: ClipboardList },
+  { to: "/admin/subscriptions", label: "Subscriptions", icon: CalendarDays },
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/settings", label: "Settings", icon: Settings },
 ];

@@ -42,7 +42,7 @@ function Dashboard() {
         <Stat icon={UtensilsCrossed} label="Menu items" value={c.items} to="/admin/menu" />
         <Stat icon={ChefHat} label="Plans" value={c.plans} to="/admin/plans" />
         <Stat icon={MapPin} label="Serviceable pincodes" value={c.pins} to="/admin/pincodes" />
-        <Stat icon={Users} label="Subscriptions" value={c.subs} to="/admin" />
+        <Stat icon={Users} label="Subscriptions" value={c.subs} to="/admin/subscriptions" />
       </div>
     </div>
   );
