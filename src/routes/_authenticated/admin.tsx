@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { ChefHat, UtensilsCrossed, MapPin, ClipboardList, LogOut, ShieldCheck, Plus, Settings } from "lucide-react";
+import { ChefHat, UtensilsCrossed, MapPin, ClipboardList, LogOut, ShieldCheck, Plus, Settings, Users } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
@@ -14,12 +14,17 @@ const NAV = [
   { to: "/admin/addons", label: "Add-ons", icon: Plus },
   { to: "/admin/pincodes", label: "Pincodes", icon: MapPin },
   { to: "/admin/orders", label: "Orders", icon: ClipboardList },
+  { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 function AdminLayout() {
-  const { isAdmin, signOut, user } = useAuth();
+  const { isAdmin, signOut, user, loading } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  if (loading) {
+    return <div className="mx-auto max-w-md px-4 py-16 text-center text-muted-foreground">Loading…</div>;
+  }
 
   if (!isAdmin) {
     return (
@@ -35,6 +40,7 @@ function AdminLayout() {
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
