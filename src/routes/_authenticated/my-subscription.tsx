@@ -106,7 +106,10 @@ function MyPage() {
             </Card>
           )}
           <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {subsQ.data?.map((s: any) => (
+            {subsQ.data?.map((s: any) => {
+              const subOrders = (ordersQ.data ?? []).filter((o: any) => o.subscription_id === s.id);
+              const upcoming = subOrders.filter((o: any) => o.status === "preparing" || o.status === "out_for_delivery");
+              return (
               <Card key={s.id} className="p-4">
                 <div className="flex items-start justify-between">
                   <div>
@@ -116,15 +119,60 @@ function MyPage() {
                   <Badge className="capitalize" variant={s.status === "active" ? "default" : "secondary"}>{s.status}</Badge>
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">{s.delivery_address}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Starts {s.start_date} {s.end_date ? `· ends ${s.end_date}` : ""} · {upcoming.length} upcoming
+                </div>
                 <div className="mt-3 flex gap-2 flex-wrap">
+                  <Dialog>
+                    <DialogTrigger asChild><Button size="sm" variant="secondary">View details</Button></DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader><DialogTitle>{s.plans?.name ?? "Subscription"} details</DialogTitle></DialogHeader>
+                      <div className="space-y-3 text-sm">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div><div className="text-xs text-muted-foreground">Status</div><div className="font-medium capitalize">{s.status}</div></div>
+                          <div><div className="text-xs text-muted-foreground">Meals / day</div><div className="font-medium">{s.meals_per_day}</div></div>
+                          <div><div className="text-xs text-muted-foreground">Days / week</div><div className="font-medium">{s.days_per_week}</div></div>
+                          <div><div className="text-xs text-muted-foreground">Slot</div><div className="font-medium capitalize">{s.slot ?? "—"}</div></div>
+                          <div><div className="text-xs text-muted-foreground">Start date</div><div className="font-medium">{s.start_date}</div></div>
+                          <div><div className="text-xs text-muted-foreground">End date</div><div className="font-medium">{s.end_date ?? "—"}</div></div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground">Delivery address</div>
+                          <div className="font-medium">{s.delivery_address}</div>
+                          <div className="text-xs text-muted-foreground mt-1">Pincode {s.pincode ?? "—"} · Contact {s.contact_phone ?? user?.phone ?? "—"}</div>
+                        </div>
+                        <div>
+                          <div className="font-display text-base font-semibold mt-2">Orders ({subOrders.length})</div>
+                          {subOrders.length === 0 && <p className="text-muted-foreground text-xs mt-1">No orders linked yet.</p>}
+                          <div className="mt-2 space-y-2">
+                            {subOrders.map((o: any) => (
+                              <div key={o.id} className="rounded border p-2">
+                                <div className="flex justify-between items-center">
+                                  <div className="text-sm font-medium">{o.delivery_date} · <span className="capitalize">{o.slot}</span></div>
+                                  <Badge variant={o.status === "delivered" ? "default" : o.status === "skipped" ? "secondary" : "outline"}>{STATUS_LABEL[o.status] ?? o.status}</Badge>
+                                </div>
+                                <div className="mt-1 text-xs text-muted-foreground">₹{Number(o.total_inr).toFixed(0)}</div>
+                                <ul className="mt-1 text-xs space-y-0.5">
+                                  {o.order_items?.map((it: any) => (
+                                    <li key={it.id}>{it.qty} × {it.name}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   {s.status === "active" && <Button size="sm" variant="outline" onClick={() => setStatus.mutate({ id: s.id, status: "paused" })}>Pause</Button>}
                   {s.status === "paused" && <Button size="sm" onClick={() => setStatus.mutate({ id: s.id, status: "active" })}>Resume</Button>}
                   {s.status !== "cancelled" && <Button size="sm" variant="destructive" onClick={() => confirm("Cancel subscription?") && setStatus.mutate({ id: s.id, status: "cancelled" })}>Cancel</Button>}
                 </div>
               </Card>
-            ))}
+            );})}
           </div>
         </section>
+
 
         <section className="mt-10">
           <h2 className="font-display text-xl font-bold">Upcoming & Recent Orders</h2>
