@@ -34,13 +34,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsAdmin(false);
       }
     });
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session);
-      if (data.session) refreshRole();
+      if (data.session) await refreshRole();
       setLoading(false);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
 
   const signOut = async () => { await supabase.auth.signOut(); };
 
