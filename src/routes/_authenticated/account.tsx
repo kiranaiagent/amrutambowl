@@ -16,19 +16,14 @@ function Account() {
         <p className="mt-2 text-sm text-muted-foreground">{user?.email}</p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link to="/my-subscription"><Button>My Orders & Subscription</Button></Link>
-          <Link to="/admin">
-            <Button variant={isAdmin ? "secondary" : "outline"}>
-              {isAdmin ? "Open Admin" : "Claim admin role"}
-            </Button>
-          </Link>
+          {isAdmin && (
+            <Link to="/admin">
+              <Button variant="secondary">Open Admin</Button>
+            </Link>
+          )}
           <Link to="/"><Button variant="secondary">Home</Button></Link>
           <Button variant="destructive" onClick={signOut}>Sign out</Button>
         </div>
-        {!isAdmin && (
-          <p className="mt-4 text-xs text-muted-foreground">
-            First setup user can claim admin access from the admin page.
-          </p>
-        )}
         <p className="mt-6 text-xs text-muted-foreground">Razorpay UPI Autopay & invoice downloads come next.</p>
       </Card>
     </div>
