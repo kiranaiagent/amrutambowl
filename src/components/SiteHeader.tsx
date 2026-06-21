@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useCart } from "@/lib/cart";
 import { ShoppingBag } from "lucide-react";
+import bowlAsset from "@/assets/brand/amrutam-bowl.jpg.asset.json";
 
 export function SiteHeader() {
   const { user, isAdmin } = useAuth();
@@ -9,7 +10,10 @@ export function SiteHeader() {
   return (
     <header className="border-b bg-background/80 backdrop-blur sticky top-0 z-40">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link to="/" className="font-display text-xl font-bold text-primary">Amrutam</Link>
+        <Link to="/" className="flex items-center gap-2">
+          <img src={bowlAsset.url} alt="" className="h-9 w-9 rounded-full object-cover" />
+          <span className="font-display text-xl font-bold text-primary">Amrutam</span>
+        </Link>
         <nav className="flex items-center gap-2 md:gap-3 text-sm">
           <Link to="/plans" className="rounded-md px-3 py-1.5 hover:bg-secondary">Plans</Link>
           <Link to="/bowl" className="rounded-md px-3 py-1.5 hover:bg-secondary">Build a Bowl</Link>
