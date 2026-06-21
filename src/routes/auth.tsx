@@ -25,6 +25,7 @@ function normalizePhone(raw: string) {
 
 function AuthPage() {
   const [step, setStep] = useState<"phone" | "otp">("phone");
+  const [channel, setChannel] = useState<"whatsapp" | "sms">("whatsapp");
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [otp, setOtp] = useState("");
@@ -40,7 +41,7 @@ function AuthPage() {
     }
   }, [authLoading, user, isAdmin, navigate, redirect]);
 
-  const sendOtp = async (e: React.FormEvent) => {
+  const sendOtp = async (e: React.FormEvent, preferredChannel: "whatsapp" | "sms" = channel) => {
     e.preventDefault();
     setLoading(true);
     try {
@@ -48,17 +49,23 @@ function AuthPage() {
       const { error } = await supabase.auth.signInWithOtp({
         phone: normalized,
         options: {
-          channel: "whatsapp",
+          channel: preferredChannel,
           data: name ? { name } : undefined,
         },
       });
       if (error) throw error;
       setPhone(normalized);
+      setChannel(preferredChannel);
       setStep("otp");
-      toast.success("OTP sent on WhatsApp! Check your messages.");
+      setOtp("");
+      toast.success(preferredChannel === "whatsapp" ? "OTP sent on WhatsApp! Check your messages." : "OTP sent via SMS.");
     } catch (err: any) {
       toast.error(err.message || "Could not send OTP");
     } finally { setLoading(false); }
+  };
+
+  const switchToSms = async (e: React.FormEvent) => {
+    await sendOtp(e, "sms");
   };
 
   const verifyOtp = async (e: React.FormEvent) => {
@@ -86,11 +93,11 @@ function AuthPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           {step === "phone"
             ? "We'll send a 6-digit code to your WhatsApp. No password needed."
-            : `Code sent on WhatsApp to ${phone}`}
+            : `Code sent ${channel === "whatsapp" ? "on WhatsApp" : "via SMS"} to ${phone}`}
         </p>
 
         {step === "phone" ? (
-          <form onSubmit={sendOtp} className="mt-6 space-y-4">
+          <form onSubmit={(e) => sendOtp(e, "whatsapp")} className="mt-6 space-y-4">
             <div>
               <Label>Name <span className="text-muted-foreground">(new users)</span></Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
@@ -108,7 +115,7 @@ function AuthPage() {
               <p className="text-xs text-muted-foreground mt-1">10-digit Indian numbers auto-prefix +91.</p>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Sending…" : "Send OTP"}
+              {loading ? "Sending…" : "Send OTP on WhatsApp"}
             </Button>
           </form>
         ) : (
@@ -128,13 +135,25 @@ function AuthPage() {
             <Button type="submit" className="w-full" disabled={loading || otp.length < 4}>
               {loading ? "Verifying…" : "Verify & sign in"}
             </Button>
-            <button
-              type="button"
-              onClick={() => { setStep("phone"); setOtp(""); }}
-              className="w-full text-sm text-muted-foreground hover:text-foreground"
-            >
-              ← Change phone number
-            </button>
+            <div className="flex flex-col items-center gap-2">
+              {channel === "whatsapp" && (
+                <button
+                  type="button"
+                  onClick={switchToSms}
+                  disabled={loading}
+                  className="text-sm text-primary font-medium hover:underline disabled:opacity-50"
+                >
+                  Didn't get it on WhatsApp? Send via SMS
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => { setStep("phone"); setOtp(""); }}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                ← Change phone number
+              </button>
+            </div>
           </form>
         )}
       </Card>
