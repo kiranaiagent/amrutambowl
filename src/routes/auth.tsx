@@ -47,12 +47,15 @@ function AuthPage() {
       const normalized = normalizePhone(phone);
       const { error } = await supabase.auth.signInWithOtp({
         phone: normalized,
-        options: { data: name ? { name } : undefined },
+        options: {
+          channel: "whatsapp",
+          data: name ? { name } : undefined,
+        },
       });
       if (error) throw error;
       setPhone(normalized);
       setStep("otp");
-      toast.success("OTP sent! Check your messages.");
+      toast.success("OTP sent on WhatsApp! Check your messages.");
     } catch (err: any) {
       toast.error(err.message || "Could not send OTP");
     } finally { setLoading(false); }
@@ -82,8 +85,8 @@ function AuthPage() {
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {step === "phone"
-            ? "We'll text you a 6-digit code. No password needed."
-            : `Code sent to ${phone}`}
+            ? "We'll send a 6-digit code to your WhatsApp. No password needed."
+            : `Code sent on WhatsApp to ${phone}`}
         </p>
 
         {step === "phone" ? (

@@ -51,7 +51,7 @@ function Home() {
             <img src={bowlAsset.url} alt="Amrutam" className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-white/90 p-1 shadow-lg" />
             <div>
               <div className="font-display text-3xl md:text-4xl font-bold leading-none">Amrutam</div>
-              <div className="text-sm md:text-base opacity-90 mt-1">Fresh, healthy tiffins — delivered daily</div>
+              <div className="text-sm md:text-base opacity-90 mt-1">Fresh &amp; Healthy food bowls delivered daily</div>
             </div>
           </div>
           <div className="mt-6 flex flex-wrap gap-3">
