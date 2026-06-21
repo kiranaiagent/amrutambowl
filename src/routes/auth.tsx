@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
-import { useEffect } from "react";
+import bowlAsset from "@/assets/brand/amrutam-bowl.jpg.asset.json";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Sign in — Amrutam" }] }),
@@ -15,12 +15,19 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+function normalizePhone(raw: string) {
+  const digits = raw.replace(/\D/g, "");
+  if (raw.trim().startsWith("+")) return "+" + digits;
+  // default to India country code
+  if (digits.length === 10) return "+91" + digits;
+  return "+" + digits;
+}
+
 function AuthPage() {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [step, setStep] = useState<"phone" | "otp">("phone");
   const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
+  const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
@@ -33,57 +40,100 @@ function AuthPage() {
     }
   }, [authLoading, user, isAdmin, navigate, redirect]);
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const sendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email, password,
-          options: { emailRedirectTo: window.location.origin, data: { name, phone } },
-        });
-        if (error) throw error;
-        toast.success("Welcome! You're signed in.");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        toast.success("Signed in!");
-      }
+      const normalized = normalizePhone(phone);
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: normalized,
+        options: { data: name ? { name } : undefined },
+      });
+      if (error) throw error;
+      setPhone(normalized);
+      setStep("otp");
+      toast.success("OTP sent! Check your messages.");
     } catch (err: any) {
-      toast.error(err.message || "Authentication failed");
+      toast.error(err.message || "Could not send OTP");
+    } finally { setLoading(false); }
+  };
+
+  const verifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({ phone, token: otp, type: "sms" });
+      if (error) throw error;
+      toast.success("Signed in!");
+    } catch (err: any) {
+      toast.error(err.message || "Invalid OTP");
     } finally { setLoading(false); }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary/40 px-4">
       <Card className="w-full max-w-md p-8">
-        <Link to="/" className="font-display text-2xl font-bold text-primary">Amrutam</Link>
-        <h1 className="mt-4 font-display text-2xl font-bold">
-          {mode === "signin" ? "Welcome back" : "Create your account"}
+        <Link to="/" className="flex items-center gap-2">
+          <img src={bowlAsset.url} alt="" className="h-9 w-9 rounded-full object-cover" />
+          <span className="font-display text-2xl font-bold text-primary">Amrutam</span>
+        </Link>
+        <h1 className="mt-5 font-display text-2xl font-bold">
+          {step === "phone" ? "Sign in with phone" : "Enter the OTP"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {mode === "signin" ? "Sign in to manage your subscription." : "Start your healthy meal journey."}
+          {step === "phone"
+            ? "We'll text you a 6-digit code. No password needed."
+            : `Code sent to ${phone}`}
         </p>
-        <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          {mode === "signup" && (
-            <>
-              <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} required /></div>
-              <div><Label>Phone</Label><Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91…" /></div>
-            </>
-          )}
-          <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-          <div><Label>Password</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} /></div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
-          </Button>
-        </form>
-        <button
-          type="button"
-          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-          className="mt-4 w-full text-sm text-muted-foreground hover:text-foreground"
-        >
-          {mode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}
-        </button>
+
+        {step === "phone" ? (
+          <form onSubmit={sendOtp} className="mt-6 space-y-4">
+            <div>
+              <Label>Name <span className="text-muted-foreground">(new users)</span></Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
+            </div>
+            <div>
+              <Label>Phone number</Label>
+              <Input
+                type="tel"
+                inputMode="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+91 98765 43210"
+                required
+              />
+              <p className="text-xs text-muted-foreground mt-1">10-digit Indian numbers auto-prefix +91.</p>
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Sending…" : "Send OTP"}
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={verifyOtp} className="mt-6 space-y-4">
+            <div>
+              <Label>6-digit code</Label>
+              <Input
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                placeholder="123456"
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading || otp.length < 4}>
+              {loading ? "Verifying…" : "Verify & sign in"}
+            </Button>
+            <button
+              type="button"
+              onClick={() => { setStep("phone"); setOtp(""); }}
+              className="w-full text-sm text-muted-foreground hover:text-foreground"
+            >
+              ← Change phone number
+            </button>
+          </form>
+        )}
       </Card>
     </div>
   );
