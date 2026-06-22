@@ -6,8 +6,8 @@ import { Footer } from "@/components/Footer";
 import { MealImage } from "@/components/MealImage";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Leaf, Dumbbell, Flame, Heart, Sparkles, Truck, ShieldCheck, ArrowRight } from "lucide-react";
-import bowlAsset from "@/assets/brand/amrutam-bowl.jpg.asset.json";
+import { Leaf, Dumbbell, Flame, Heart, Sparkles, Truck, ShieldCheck, ArrowRight, Phone } from "lucide-react";
+import { useSiteSettings } from "@/lib/settings";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,6 +20,10 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
+  const { data: settings } = useSiteSettings();
+  const whatsapp = settings?.whatsapp_number ?? "919999999999";
+  const phone = settings?.phone_number ?? "+919999999999";
+  const prefill = encodeURIComponent(settings?.whatsapp_prefill ?? "Hi! I have a question about my meal subscription.");
   const featured = useQuery({
     queryKey: ["home-meals"],
     queryFn: async () => {
@@ -44,21 +48,11 @@ function Home() {
     <div className="min-h-screen">
       <SiteHeader />
 
-      {/* Compact hero: brand + CTAs, no marketing copy */}
+      {/* Slim hero banner — brand is in the header, so just tagline + trust */}
       <section className="relative overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
-        <div className="mx-auto max-w-6xl px-4 py-8 md:py-12 text-primary-foreground">
-          <div className="flex items-center gap-4">
-            <img src={bowlAsset.url} alt="Amrutam" className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-white/90 p-1 shadow-lg" />
-            <div>
-              <div className="font-display text-3xl md:text-4xl font-bold leading-none">Amrutam</div>
-              <div className="text-sm md:text-base opacity-90 mt-1">Fresh &amp; Healthy food bowls delivered daily</div>
-            </div>
-          </div>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link to="/plans" className="rounded-full bg-background px-5 py-2.5 font-semibold text-primary shadow-lg hover:scale-[1.02] transition">Order a Plan</Link>
-            <Link to="/bowl" className="rounded-full border border-primary-foreground/50 px-5 py-2.5 font-semibold">Build a Bowl</Link>
-          </div>
-          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs md:text-sm opacity-90">
+        <div className="mx-auto max-w-6xl px-4 py-6 md:py-8 text-primary-foreground">
+          <h1 className="font-display text-xl md:text-2xl font-semibold">Fresh &amp; healthy food bowls, delivered daily</h1>
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs md:text-sm opacity-90">
             <div className="inline-flex items-center gap-1.5"><Sparkles className="h-4 w-4" /> Fresh, never frozen</div>
             <div className="inline-flex items-center gap-1.5"><Truck className="h-4 w-4" /> Daily delivery</div>
             <div className="inline-flex items-center gap-1.5"><ShieldCheck className="h-4 w-4" /> FSSAI certified</div>
@@ -143,6 +137,33 @@ function Home() {
           </div>
         </section>
       )}
+
+      {/* Contact / questions */}
+      <section className="bg-secondary/30 py-12 border-t">
+        <div className="mx-auto max-w-3xl px-4 text-center">
+          <h2 className="font-display text-2xl md:text-3xl font-bold">Questions? Talk to us</h2>
+          <p className="mt-2 text-sm text-muted-foreground">We're happy to help with plans, delivery, dietary preferences, or anything else.</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <a
+              href={`https://wa.me/${whatsapp}?text=${prefill}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-6 py-3 font-semibold text-white shadow hover:scale-[1.02] transition"
+            >
+              <svg viewBox="0 0 32 32" className="h-5 w-5" fill="currentColor" aria-hidden>
+                <path d="M16.225 1.875c-7.97 0-14.5 6.602-14.5 14.578a14.55 14.55 0 0 0 2.522 8.218l-1.736 5.115 5.349-1.706a14.54 14.54 0 0 0 8.336 2.612C24.196 30.692 30.725 24.09 30.725 16.45c0-3.892-1.516-7.555-4.27-10.31a14.48 14.48 0 0 0-10.23-4.265zm5.964 20.785c-.254.71-1.49 1.36-2.07 1.402-.527.038-1.193.052-1.925-.122-.444-.106-1.014-.296-1.742-.61-3.068-1.324-5.072-4.413-5.225-4.617-.153-.203-1.255-1.665-1.255-3.177 0-1.51.792-2.255 1.073-2.563.28-.305.612-.382.815-.382.203 0 .407.002.585.01.187.01.438-.07.685.522.255.61.866 2.118.943 2.272.077.153.128.331.025.534-.102.203-.153.33-.305.508-.153.178-.32.398-.458.534-.153.153-.31.32-.133.624.178.305.79 1.305 1.697 2.114 1.165 1.04 2.148 1.36 2.452 1.513.305.153.483.127.661-.076.178-.204.763-.89.967-1.196.203-.305.407-.254.687-.153.28.102 1.78.84 2.085.992.305.153.508.229.585.357.077.127.077.737-.178 1.448z"/>
+              </svg>
+              Chat on WhatsApp
+            </a>
+            <a
+              href={`tel:${phone}`}
+              className="inline-flex items-center gap-2 rounded-full border-2 border-primary px-6 py-3 font-semibold text-primary hover:bg-primary hover:text-primary-foreground transition"
+            >
+              <Phone className="h-5 w-5" /> Call {phone}
+            </a>
+          </div>
+        </div>
+      </section>
 
       <Footer />
     </div>
