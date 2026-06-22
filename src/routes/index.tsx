@@ -6,8 +6,8 @@ import { Footer } from "@/components/Footer";
 import { MealImage } from "@/components/MealImage";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Leaf, Dumbbell, Flame, Heart, Sparkles, Truck, ShieldCheck, ArrowRight } from "lucide-react";
-import bowlAsset from "@/assets/brand/amrutam-bowl.jpg.asset.json";
+import { Leaf, Dumbbell, Flame, Heart, Sparkles, Truck, ShieldCheck, ArrowRight, Phone } from "lucide-react";
+import { useSiteSettings } from "@/lib/settings";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,6 +20,10 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
+  const { data: settings } = useSiteSettings();
+  const whatsapp = settings?.whatsapp_number ?? "919999999999";
+  const phone = settings?.phone_number ?? "+919999999999";
+  const prefill = encodeURIComponent(settings?.whatsapp_prefill ?? "Hi! I have a question about my meal subscription.");
   const featured = useQuery({
     queryKey: ["home-meals"],
     queryFn: async () => {
@@ -44,21 +48,11 @@ function Home() {
     <div className="min-h-screen">
       <SiteHeader />
 
-      {/* Compact hero: brand + CTAs, no marketing copy */}
+      {/* Slim hero banner — brand is in the header, so just tagline + trust */}
       <section className="relative overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
-        <div className="mx-auto max-w-6xl px-4 py-8 md:py-12 text-primary-foreground">
-          <div className="flex items-center gap-4">
-            <img src={bowlAsset.url} alt="Amrutam" className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-white/90 p-1 shadow-lg" />
-            <div>
-              <div className="font-display text-3xl md:text-4xl font-bold leading-none">Amrutam</div>
-              <div className="text-sm md:text-base opacity-90 mt-1">Fresh &amp; Healthy food bowls delivered daily</div>
-            </div>
-          </div>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link to="/plans" className="rounded-full bg-background px-5 py-2.5 font-semibold text-primary shadow-lg hover:scale-[1.02] transition">Order a Plan</Link>
-            <Link to="/bowl" className="rounded-full border border-primary-foreground/50 px-5 py-2.5 font-semibold">Build a Bowl</Link>
-          </div>
-          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs md:text-sm opacity-90">
+        <div className="mx-auto max-w-6xl px-4 py-6 md:py-8 text-primary-foreground">
+          <h1 className="font-display text-xl md:text-2xl font-semibold">Fresh &amp; healthy food bowls, delivered daily</h1>
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs md:text-sm opacity-90">
             <div className="inline-flex items-center gap-1.5"><Sparkles className="h-4 w-4" /> Fresh, never frozen</div>
             <div className="inline-flex items-center gap-1.5"><Truck className="h-4 w-4" /> Daily delivery</div>
             <div className="inline-flex items-center gap-1.5"><ShieldCheck className="h-4 w-4" /> FSSAI certified</div>
