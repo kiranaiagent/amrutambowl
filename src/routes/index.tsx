@@ -48,25 +48,28 @@ function Home() {
     <div className="min-h-screen">
       <SiteHeader />
 
-      {/* Slim hero banner — brand is in the header, so just tagline + trust */}
+      {/* Slim hero banner */}
       <section className="relative overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
         <div className="mx-auto max-w-6xl px-4 py-6 md:py-8 text-primary-foreground">
-          <h1 className="font-display text-xl md:text-2xl font-semibold">Fresh &amp; healthy food bowls, delivered daily</h1>
-          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs md:text-sm opacity-90">
-            <div className="inline-flex items-center gap-1.5"><Sparkles className="h-4 w-4" /> Fresh, never frozen</div>
-            <div className="inline-flex items-center gap-1.5"><Truck className="h-4 w-4" /> Daily delivery</div>
-            <div className="inline-flex items-center gap-1.5"><ShieldCheck className="h-4 w-4" /> FSSAI certified</div>
-          </div>
+          <h1 className="font-display text-xl md:text-2xl font-semibold">Personalized Healthy Food Bowls Delivered Daily</h1>
         </div>
       </section>
 
-      {/* Popular plans first — primary action */}
+      {/* Primary CTAs */}
+      <section className="mx-auto max-w-6xl px-4 pt-6 md:pt-8">
+        <div className="flex flex-wrap gap-3">
+          <Link to="/plans"><Button size="lg">Popular Food Bowl Plans</Button></Link>
+          <Link to="/bowl"><Button size="lg" variant="outline">Build My Own Bowl</Button></Link>
+        </div>
+      </section>
+
+      {/* Popular plans */}
       {(plans.data?.length ?? 0) > 0 && (
         <section className="mx-auto max-w-6xl px-4 py-10 md:py-14">
           <div className="flex items-end justify-between flex-wrap gap-2">
             <div>
-              <h2 className="font-display text-2xl md:text-3xl font-bold">Popular plans</h2>
-              <p className="text-sm text-muted-foreground mt-1">Pick a plan and start tomorrow.</p>
+              <h2 className="font-display text-2xl md:text-3xl font-bold">Popular Food Bowl Plans</h2>
+              <p className="text-sm text-muted-foreground mt-1">Pick a plan and start Healthy Food Bowls Journey</p>
             </div>
             <Link to="/plans" className="text-sm text-primary font-medium inline-flex items-center gap-1">See all <ArrowRight className="h-3.5 w-3.5" /></Link>
           </div>
@@ -91,6 +94,7 @@ function Home() {
           </div>
         </section>
       )}
+
 
       <section className="bg-secondary/30 py-12">
         <div className="mx-auto max-w-6xl px-4">
