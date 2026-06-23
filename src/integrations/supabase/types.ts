@@ -73,9 +73,13 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          is_addon: boolean
+          is_available: boolean
+          meal_type: Database["public"]["Enums"]["meal_type"]
           name: string
           price_inr: number
           protein_g: number
+          serving_size: string | null
           status: Database["public"]["Enums"]["content_status"]
           tags: string[] | null
           updated_at: string
@@ -93,9 +97,13 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_addon?: boolean
+          is_available?: boolean
+          meal_type?: Database["public"]["Enums"]["meal_type"]
           name: string
           price_inr?: number
           protein_g?: number
+          serving_size?: string | null
           status?: Database["public"]["Enums"]["content_status"]
           tags?: string[] | null
           updated_at?: string
@@ -113,9 +121,13 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_addon?: boolean
+          is_available?: boolean
+          meal_type?: Database["public"]["Enums"]["meal_type"]
           name?: string
           price_inr?: number
           protein_g?: number
+          serving_size?: string | null
           status?: Database["public"]["Enums"]["content_status"]
           tags?: string[] | null
           updated_at?: string
@@ -644,6 +656,7 @@ export type Database = {
       delivery_slot: "breakfast" | "lunch" | "dinner"
       food_type: "veg" | "non-veg" | "egg" | "jain"
       goal_type: "weight-loss" | "muscle-gain" | "balanced" | "keto"
+      meal_type: "breakfast" | "lunch" | "dinner" | "snack"
       order_status: "preparing" | "out_for_delivery" | "delivered" | "skipped"
       payment_status: "pending" | "paid" | "failed" | "refunded"
       sub_status: "active" | "paused" | "cancelled"
@@ -780,6 +793,7 @@ export const Constants = {
       delivery_slot: ["breakfast", "lunch", "dinner"],
       food_type: ["veg", "non-veg", "egg", "jain"],
       goal_type: ["weight-loss", "muscle-gain", "balanced", "keto"],
+      meal_type: ["breakfast", "lunch", "dinner", "snack"],
       order_status: ["preparing", "out_for_delivery", "delivered", "skipped"],
       payment_status: ["pending", "paid", "failed", "refunded"],
       sub_status: ["active", "paused", "cancelled"],
