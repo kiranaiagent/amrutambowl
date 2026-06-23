@@ -50,16 +50,17 @@ function Home() {
 
       {/* Slim hero banner */}
       <section className="relative overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
-        <div className="mx-auto max-w-6xl px-4 py-6 md:py-8 text-primary-foreground">
-          <h1 className="font-display text-xl md:text-2xl font-semibold">Personalized Healthy Food Bowls Delivered Daily</h1>
+        <div className="mx-auto max-w-6xl px-4 py-3 md:py-4 text-primary-foreground text-center">
+          <h1 className="font-display text-base md:text-lg leading-tight">Personalized Healthy Food Bowls</h1>
+          <div className="font-display text-xs md:text-sm opacity-90 leading-tight">Delivered Daily</div>
         </div>
       </section>
 
-      {/* Primary CTAs */}
+      {/* Primary CTAs — side by side */}
       <section className="mx-auto max-w-6xl px-4 pt-6 md:pt-8">
-        <div className="flex flex-wrap gap-3">
-          <Link to="/plans"><Button size="lg">Popular Food Bowl Plans</Button></Link>
-          <Link to="/bowl"><Button size="lg" variant="outline">Build My Own Bowl</Button></Link>
+        <div className="grid grid-cols-2 gap-3 max-w-xl">
+          <Link to="/plans"><Button size="lg" className="w-full">Bowl Plans</Button></Link>
+          <Link to="/bowl"><Button size="lg" variant="outline" className="w-full">Build a Bowl</Button></Link>
         </div>
       </section>
 
@@ -67,10 +68,7 @@ function Home() {
       {(plans.data?.length ?? 0) > 0 && (
         <section className="mx-auto max-w-6xl px-4 py-10 md:py-14">
           <div className="flex items-end justify-between flex-wrap gap-2">
-            <div>
-              <h2 className="font-display text-2xl md:text-3xl font-bold">Popular Food Bowl Plans</h2>
-              <p className="text-sm text-muted-foreground mt-1">Pick a plan and start Healthy Food Bowls Journey</p>
-            </div>
+            <h2 className="font-display text-2xl md:text-3xl">Popular Bowl Plans</h2>
             <Link to="/plans" className="text-sm text-primary font-medium inline-flex items-center gap-1">See all <ArrowRight className="h-3.5 w-3.5" /></Link>
           </div>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
