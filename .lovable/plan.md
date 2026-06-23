@@ -1,100 +1,60 @@
+# Amrutam Bowl — Functionality Rework
 
-# Amrutam — Big Expansion Plan
+Four slices, shipped in order. Each slice is reviewable on its own.
 
-Building everything you selected, in 4 sequential batches. Each batch ends in a usable state so you can test as we go.
+## Slice 1 — Schema + Menu Item form
 
----
+### Schema changes (single migration)
+- `menu_items`: add `meal_type` (enum: breakfast, lunch, dinner, snack), `serving_size text`, `is_available boolean default true` (sold-out toggle), `is_addon boolean default false`. Drop `category` after backfilling `meal_type` from existing values where possible.
+- Backfill: copy every row in `add_ons` into `menu_items` with `is_addon = true`. Keep `add_ons` table but mark deprecated; UI no longer reads/writes it.
+- Add unique constraint and trigger to enforce R4 (sold-out independent of active).
+- Block plan activation via trigger when no `plan_items` exist (R1).
+- `order_items`: ensure name + price snapshot on insert (R2) — add NOT NULL where missing and a trigger that fills from `menu_items` if blank.
 
-## Batch 1 — Status lifecycle (replaces destructive delete)
+### Admin → Menu Items page
+- New columns and filters: Meal type, Available toggle, Add-on flag.
+- Delete button per row (with confirm).
+- Edit form: serving size text input, meal type dropdown, available/sold-out switch, "Also available as an add-on" checkbox.
 
-**Schema**
-- Add `status` enum (`active`, `inactive`, `archived`) to `plans`, `menu_items`, `add_ons`.
-  - `active` → visible to customers
-  - `inactive` → hidden from customers, still editable, existing subs continue
-  - `archived` → read-only, hidden everywhere except in admin "Archive" filter
-- Backfill from existing `is_active` boolean, keep boolean as a generated/synced column for compatibility, then drop later.
+### Add-ons admin page
+- Becomes a read-only filtered view: lists menu items where `is_addon = true`. Removes the separate create form.
 
-**Admin UI**
-- Replace trash icon with a status dropdown (Active / Inactive / Archived) on every card.
-- Status filter tabs at the top of Plans, Menu Items, Add-ons pages.
-- Confirm dialog only when archiving.
+## Slice 2 — Plan editor
 
-**Customer site**
-- Public queries already filter by `is_active`; switch to `status = 'active'`.
+- Plan edit page gets a "Menu items in this plan" section with two modes:
+  - **Fixed menu**: multi-select of menu items, used for every delivery.
+  - **Weekly rotation**: grid Mon–Sun × meal slots; assign menu items per cell. Reuses existing `plan_items.day_of_week` + `slot`.
+- Billing cycle dropdown: daily, weekly, monthly.
+- Status control: "Active" is disabled until the plan has ≥1 plan_item. Surface inline error.
+- Plan list: show item count badge per plan.
 
----
+## Slice 3 — Customer flow
 
-## Batch 2 — Flexible pricing engine
+- `/plans/$id` (plan detail): show included menu items grid with photo, serving size, calories, P/C/F, veg/non-veg dot.
+- Two CTAs: **Take this plan as-is** | **Customize**.
+- Customize: for each included item, an "Swap" button opens a picker of menu items with the same `meal_type`; price delta shown inline; new total updates live.
+- Build-a-Bowl page (`/bowl`): unchanged à-la-carte flow but now sources from `menu_items` (already does).
+- On both paths: an "Add extras" section listing `is_addon = true` items; checkbox + qty; live total.
+- Cart/checkout carries the resolved menu_items + add-ons + price snapshots.
 
-**Schema**
-- `menu_items.base_price_inr` (already exists as `price_inr`) + new `upcharge_inr` for premium swaps.
-- `plans.slot_prices jsonb` → `{ breakfast: 0, lunch: 180, dinner: 200 }` per-meal base price inside a plan.
-- `add_ons.price_inr` already exists; add `category` (`drink`, `dessert`, `extra-roti`, `protein-boost`, etc.) and `max_per_order`.
-- New `pricing_rules` view computing live order total.
+## Slice 4 — Signup + customer record
 
-**Customize page (`/plans/$id`)**
-- Each day/slot cell shows its base price.
-- Swapping to a premium item shows `+₹40` upcharge live.
-- Add-ons section per delivery (e.g. extra roti +₹15, lassi +₹60).
-- Running total recalculates instantly; breakdown shown in side panel.
-
-**Checkout**
-- Order total = sum(slot base + swap upcharges + add-ons) × delivery dates − discounts.
-- Persisted into `orders.subtotal_inr`, `discount_inr`, `total_inr` (new columns).
-
----
-
-## Batch 3 — Promo codes, referrals, offers
-
-**Schema**
-- New `promo_codes` table: `code`, `type` (`percent`/`flat`), `value`, `min_order_inr`, `max_discount_inr`, `starts_at`, `expires_at`, `usage_limit`, `usage_count`, `first_order_only`, `status`.
-- New `promo_redemptions` table (per user per code, enforces single-use rules).
-- `profiles.referral_code` (auto-generated short code) + `profiles.referred_by` + `profiles.wallet_credit_inr`.
-- New `featured_items` boolean on `menu_items` for "Chef's Special" / "Festival Special" + `feature_label` text.
-
-**Admin UI**
-- New `/admin/promos` page: CRUD coupons, see redemption stats.
-- Star/feature toggle on each menu item; optional banner text.
-
-**Customer UI**
-- Promo code input on `/checkout` with live validation + applied discount line.
-- "Featured this week" rail on home + plan detail pages.
-- Account page shows: referral code + share link, wallet credit balance, past redemptions.
-- First-order banner: "Use WELCOME200 for ₹200 off your first order".
-
----
-
-## Batch 4 — Customer extras + admin power tools
-
-**Customer**
-- Per-slot **special notes** textbox in customize (e.g. "less spicy", "no coriander"); persisted to `order_items.notes`.
-- **Delivery time-slot preference** on profile + per-subscription override (e.g. lunch 12:30–1:30).
-- **Allergens & dietary tags** on profile (nuts, dairy, gluten, jain, vegan) — surfaced as warnings when swapping into a conflicting item.
-- **Pause / skip days** on `/my-subscription`: pick dates to skip; credits roll to wallet or extend end date.
-
-**Admin power tools**
-- **Daily specials**: toggle + label per menu item, shows banner site-wide.
-- **Duplicate week**: button on Plan menu builder to copy current week into next, or copy from another plan.
-- **Per-day capacity caps**: `menu_items.daily_cap` int; checkout decrements and blocks when full; admin sees today's remaining stock.
-- **Analytics dashboard** at `/admin`: cards for revenue (today/week/month), active subscriptions, top 5 items, churn rate, promo redemptions.
-
----
+- `/auth` phone-OTP: capture name and delivery pincode on first sign-in (one extra step after OTP).
+- Pincode validated against `serviceable_pincodes`; non-serviceable users still register but get a "we'll notify you" notice.
+- `handle_new_user` trigger updated to insert `profiles` row with phone + pincode from `raw_user_meta_data`.
+- Checkout: if profile is missing phone or pincode, prompt before payment and persist.
+- Admin → Users → Customers: query joins `profiles` so newly subscribed users appear with phone and pincode.
 
 ## Technical notes
 
-- All new tables: GRANT to `authenticated` + `service_role`, RLS enabled, admin-write via `has_role(auth.uid(),'admin')`.
-- Promo validation is a `validate_promo(code, user_id, subtotal)` SECURITY DEFINER function returning discount amount + error reason — keeps logic atomic and prevents client tampering.
-- Pricing recalculated server-side on checkout; client total is display-only.
-- Capacity decrement uses a row-level lock in a server function to prevent race conditions.
-- Customizations and notes already use `sessionStorage` bridge; extending the same `ruchi.plan.overrides.v1` schema.
-- Status enum migration is non-destructive — `is_active` stays in sync via trigger until all UI is migrated.
+- All schema work goes through one migration per slice (4 total).
+- Use `supabase--migration` for structure, `supabase--insert` to backfill add_ons → menu_items.
+- New enum `meal_type` added with safe default.
+- Triggers: `enforce_plan_has_items_before_active`, `snapshot_order_item_from_menu`.
+- RLS: new columns inherit existing policies; no new policies needed.
+- Existing routes touched: `src/routes/_authenticated/admin/menu.tsx`, `admin/plans.tsx`, `admin/addons.tsx`, `admin/users.tsx`, `plans.$id.tsx`, `bowl.tsx`, `cart.tsx`, `checkout.tsx`, `auth.tsx`. New component: `MenuItemSwapPicker`.
 
----
+## Out of scope this round
+- Payment provider swap, delivery scheduling logic, nutrition daily totals on the customer dashboard. Can come after slice 4 lands.
 
-## Out of scope (this round)
-
-- Razorpay (deferred per your answer).
-- SMS/WhatsApp notifications.
-- Driver/delivery routing app.
-
-Reply **go** to start with Batch 1, or tell me to reorder.
+I'll start on Slice 1 (schema + Menu Item form) once you approve.
