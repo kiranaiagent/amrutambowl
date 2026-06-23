@@ -34,8 +34,9 @@
   --color-protein: var(--protein);
   --color-carbs: var(--carbs);
   --color-fat: var(--fat);
-  --font-display: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Bebas Neue", system-ui, sans-serif;
+  --font-sans: "Barlow", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
 :root {
@@ -99,7 +100,7 @@
     color: var(--color-foreground);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
+  h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: 0.02em; }
 }
 
 @utility veg-dot {
