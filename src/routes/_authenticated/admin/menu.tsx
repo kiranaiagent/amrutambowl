@@ -10,12 +10,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { toast } from "sonner";
 import { uploadMealImage } from "@/lib/storage";
 import { MealImage } from "@/components/MealImage";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { StatusBadge, StatusControl, StatusFilterTabs, type ContentStatus } from "@/components/admin/StatusControl";
+
+type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
 type Item = {
   id: string;
@@ -31,8 +37,10 @@ type Item = {
   food_type: "veg" | "non-veg" | "egg" | "jain";
   allergens: string[] | null;
   tags: string[] | null;
-  category: string | null;
-  is_active: boolean;
+  meal_type: MealType;
+  serving_size: string | null;
+  is_available: boolean;
+  is_addon: boolean;
   status: ContentStatus;
 };
 
@@ -41,10 +49,15 @@ export const Route = createFileRoute("/_authenticated/admin/menu")({
 });
 
 const FOOD_TYPES = ["veg", "non-veg", "egg", "jain"] as const;
+const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
 const TAG_OPTIONS = ["keto", "high-protein", "low-carb", "gluten-free"];
 
 function emptyItem(): Partial<Item> {
-  return { name: "", description: "", price_inr: 0, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0, food_type: "veg", allergens: [], tags: [], category: "", status: "active", image_url: "" };
+  return {
+    name: "", description: "", price_inr: 0, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0,
+    food_type: "veg", allergens: [], tags: [], meal_type: "lunch", serving_size: "",
+    is_available: true, is_addon: false, status: "active", image_url: "",
+  };
 }
 
 function MenuPage() {
@@ -75,7 +88,7 @@ function MenuPage() {
         if (error) throw error;
       }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); setOpen(false); toast.success("Saved"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); qc.invalidateQueries({ queryKey: ["addons-admin"] }); setOpen(false); toast.success("Saved"); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -85,6 +98,24 @@ function MenuPage() {
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); toast.success("Status updated"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const toggleAvailable = useMutation({
+    mutationFn: async ({ id, is_available }: { id: string; is_available: boolean }) => {
+      const { error } = await supabase.from("menu_items").update({ is_available }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["menu_items"] }),
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("menu_items").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); qc.invalidateQueries({ queryKey: ["addons-admin"] }); toast.success("Deleted"); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -110,8 +141,8 @@ function MenuPage() {
     <div className="p-6 md:p-8">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-display text-3xl font-bold">Menu Items</h1>
-          <p className="text-muted-foreground">Hero photo, macros, food type and tags.</p>
+          <h1 className="font-display text-3xl">Menu Items</h1>
+          <p className="text-muted-foreground text-sm">One master catalog. Flag an item as an add-on to expose it as an extra.</p>
         </div>
         <StatusFilterTabs value={filter} onChange={setFilter} counts={{
           all: items.data?.length,
@@ -134,8 +165,14 @@ function MenuPage() {
                 </div>
               </div>
               <div><Label>Name</Label><Input value={editing?.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></div>
-              <div><Label>Category</Label><Input value={editing?.category ?? ""} onChange={(e) => setEditing({ ...editing, category: e.target.value })} placeholder="e.g. Lunch Bowl" /></div>
-              <div className="md:col-span-2"><Label>Description</Label><Textarea value={editing?.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></div>
+              <div>
+                <Label>Meal type</Label>
+                <Select value={editing?.meal_type ?? "lunch"} onValueChange={(v) => setEditing({ ...editing, meal_type: v as MealType })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{MEAL_TYPES.map((m) => <SelectItem key={m} value={m} className="capitalize">{m}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div><Label>Serving size / quantity</Label><Input value={editing?.serving_size ?? ""} onChange={(e) => setEditing({ ...editing, serving_size: e.target.value })} placeholder="e.g. 300g, 1 bowl, 250ml" /></div>
               <div>
                 <Label>Food type</Label>
                 <Select value={editing?.food_type} onValueChange={(v) => setEditing({ ...editing, food_type: v as any })}>
@@ -143,6 +180,7 @@ function MenuPage() {
                   <SelectContent>{FOOD_TYPES.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
+              <div className="md:col-span-2"><Label>Description</Label><Textarea value={editing?.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></div>
               <div><Label>Price (₹, incl. GST)</Label><Input type="number" step="0.01" value={editing?.price_inr ?? 0} onChange={(e) => setEditing({ ...editing, price_inr: +e.target.value })} /></div>
               <div><Label>Calories</Label><Input type="number" value={editing?.calories ?? 0} onChange={(e) => setEditing({ ...editing, calories: +e.target.value })} /></div>
               <div><Label>Protein (g)</Label><Input type="number" step="0.1" value={editing?.protein_g ?? 0} onChange={(e) => setEditing({ ...editing, protein_g: +e.target.value })} /></div>
@@ -170,6 +208,22 @@ function MenuPage() {
                     );
                   })}
                 </div>
+              </div>
+              <div className="md:col-span-2 grid gap-3 sm:grid-cols-2 rounded-md border p-3">
+                <label className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="font-medium text-sm">Available</div>
+                    <div className="text-xs text-muted-foreground">Sold-out items stay active but aren't orderable.</div>
+                  </div>
+                  <Switch checked={editing?.is_available ?? true} onCheckedChange={(v) => setEditing({ ...editing, is_available: v })} />
+                </label>
+                <label className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="font-medium text-sm">Also available as an add-on</div>
+                    <div className="text-xs text-muted-foreground">Shows up in customer's add-ons picker.</div>
+                  </div>
+                  <Switch checked={editing?.is_addon ?? false} onCheckedChange={(v) => setEditing({ ...editing, is_addon: v })} />
+                </label>
               </div>
               <div className="md:col-span-2 flex items-center gap-3">
                 <Label>Status</Label>
@@ -204,8 +258,14 @@ function MenuPage() {
                     <span className={it.food_type === "veg" || it.food_type === "jain" ? "veg-dot" : "nonveg-dot"} aria-hidden />
                     <h3 className="font-semibold">{it.name}</h3>
                   </div>
-                  {it.category && <div className="text-xs text-muted-foreground">{it.category}</div>}
-                  <div className="mt-1"><StatusBadge status={it.status} /></div>
+                  <div className="text-xs text-muted-foreground capitalize">
+                    {it.meal_type}{it.serving_size ? ` · ${it.serving_size}` : ""}
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                    <StatusBadge status={it.status} />
+                    {!it.is_available && <Badge variant="destructive" className="text-[10px]">Sold out</Badge>}
+                    {it.is_addon && <Badge variant="secondary" className="text-[10px]">Add-on</Badge>}
+                  </div>
                 </div>
                 <div className="text-right">
                   <div className="font-bold">₹{Number(it.price_inr).toFixed(0)}</div>
@@ -222,8 +282,27 @@ function MenuPage() {
                   {it.tags.map((t) => <Badge key={t} variant="outline" className="text-xs">{t}</Badge>)}
                 </div>
               )}
-              <div className="mt-4 flex gap-2 pt-3 border-t items-center">
+              <div className="mt-4 flex flex-wrap gap-2 pt-3 border-t items-center">
+                <label className="flex items-center gap-2 text-xs">
+                  <Switch checked={it.is_available} onCheckedChange={(v) => toggleAvailable.mutate({ id: it.id, is_available: v })} />
+                  Available
+                </label>
                 <Button size="sm" variant="ghost" onClick={() => { setEditing(it); setOpen(true); }}><Pencil className="h-4 w-4 mr-1" />Edit</Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete "{it.name}"?</AlertDialogTitle>
+                      <AlertDialogDescription>This permanently removes the item from your catalog. Existing orders keep their snapshot.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => del.mutate(it.id)}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
                 <div className="ml-auto">
                   <StatusControl status={it.status} label="item" onChange={(s) => setStatus.mutate({ id: it.id, status: s })} />
                 </div>
