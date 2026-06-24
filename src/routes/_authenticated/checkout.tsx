@@ -83,9 +83,11 @@ function Checkout() {
   }, [planQ.data?.billing_cycle]);
 
   const addonsQ = useQuery({
-    queryKey: ["addons-public"],
+    queryKey: ["addons-public-menu"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("add_ons").select("*").eq("status", "active").order("category");
+      const { data, error } = await supabase.from("menu_items")
+        .select("id,name,description,image_url,price_inr,food_type,is_available")
+        .eq("status", "active").eq("is_available", true).order("name");
       if (error) throw error;
       return data;
     },
@@ -193,7 +195,7 @@ function Checkout() {
         // Persist add-ons
         const addonRows = Object.entries(addonQty)
           .filter(([, q]) => q > 0)
-          .map(([addon_id, qty]) => ({ subscription_id: sub.id, addon_id, qty }));
+          .map(([menu_item_id, qty]) => ({ subscription_id: sub.id, menu_item_id, qty }));
         if (addonRows.length) {
           const { error } = await supabase.from("subscription_addons").insert(addonRows);
           if (error) throw error;

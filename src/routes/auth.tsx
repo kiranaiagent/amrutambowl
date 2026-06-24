@@ -28,6 +28,7 @@ function AuthPage() {
   const [channel, setChannel] = useState<"whatsapp" | "sms">("whatsapp");
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
+  const [pincode, setPincode] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -72,8 +73,16 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({ phone, token: otp, type: "sms" });
+      const { data, error } = await supabase.auth.verifyOtp({ phone, token: otp, type: "sms" });
       if (error) throw error;
+      // Persist name + pincode onto the profile (handle_new_user trigger creates the row).
+      const uid = data.user?.id;
+      if (uid && (name || pincode)) {
+        await supabase.from("profiles").update({
+          ...(name ? { name } : {}),
+          ...(pincode ? { pincode } : {}),
+        }).eq("id", uid);
+      }
       toast.success("Signed in!");
     } catch (err: any) {
       toast.error(err.message || "Invalid OTP");
@@ -113,6 +122,17 @@ function AuthPage() {
                 required
               />
               <p className="text-xs text-muted-foreground mt-1">10-digit Indian numbers auto-prefix +91.</p>
+            </div>
+            <div>
+              <Label>Delivery pincode <span className="text-muted-foreground">(optional)</span></Label>
+              <Input
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                maxLength={6}
+                value={pincode}
+                onChange={(e) => setPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="e.g. 560001"
+              />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Sending…" : "Send OTP on WhatsApp"}

@@ -18,7 +18,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { uploadMealImage } from "@/lib/storage";
 import { MealImage } from "@/components/MealImage";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2, Copy } from "lucide-react";
 import { StatusBadge, StatusControl, StatusFilterTabs, type ContentStatus } from "@/components/admin/StatusControl";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
@@ -40,7 +40,6 @@ type Item = {
   meal_type: MealType;
   serving_size: string | null;
   is_available: boolean;
-  is_addon: boolean;
   status: ContentStatus;
 };
 
@@ -56,7 +55,7 @@ function emptyItem(): Partial<Item> {
   return {
     name: "", description: "", price_inr: 0, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0,
     food_type: "veg", allergens: [], tags: [], meal_type: "lunch", serving_size: "",
-    is_available: true, is_addon: false, status: "active", image_url: "",
+    is_available: true, status: "active", image_url: "",
   };
 }
 
@@ -88,7 +87,7 @@ function MenuPage() {
         if (error) throw error;
       }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); qc.invalidateQueries({ queryKey: ["addons-admin"] }); setOpen(false); toast.success("Saved"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); setOpen(false); toast.success("Saved"); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -115,7 +114,16 @@ function MenuPage() {
       const { error } = await supabase.from("menu_items").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); qc.invalidateQueries({ queryKey: ["addons-admin"] }); toast.success("Deleted"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); toast.success("Deleted"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const duplicate = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("duplicate_menu_item", { _id: id });
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); toast.success("Duplicated — find the copy in Inactive"); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -217,14 +225,8 @@ function MenuPage() {
                   </div>
                   <Switch checked={editing?.is_available ?? true} onCheckedChange={(v) => setEditing({ ...editing, is_available: v })} />
                 </label>
-                <label className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="font-medium text-sm">Also available as an add-on</div>
-                    <div className="text-xs text-muted-foreground">Shows up in customer's add-ons picker.</div>
-                  </div>
-                  <Switch checked={editing?.is_addon ?? false} onCheckedChange={(v) => setEditing({ ...editing, is_addon: v })} />
-                </label>
               </div>
+
               <div className="md:col-span-2 flex items-center gap-3">
                 <Label>Status</Label>
                 <Select value={editing?.status ?? "active"} onValueChange={(v) => setEditing({ ...editing, status: v as ContentStatus })}>
@@ -264,7 +266,7 @@ function MenuPage() {
                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
                     <StatusBadge status={it.status} />
                     {!it.is_available && <Badge variant="destructive" className="text-[10px]">Sold out</Badge>}
-                    {it.is_addon && <Badge variant="secondary" className="text-[10px]">Add-on</Badge>}
+                    {!it.is_available && <Badge variant="destructive" className="text-[10px]">Sold out</Badge>}
                   </div>
                 </div>
                 <div className="text-right">
@@ -288,6 +290,7 @@ function MenuPage() {
                   Available
                 </label>
                 <Button size="sm" variant="ghost" onClick={() => { setEditing(it); setOpen(true); }}><Pencil className="h-4 w-4 mr-1" />Edit</Button>
+                <Button size="sm" variant="ghost" onClick={() => duplicate.mutate(it.id)} disabled={duplicate.isPending}><Copy className="h-4 w-4 mr-1" />Copy</Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
