@@ -73,8 +73,16 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({ phone, token: otp, type: "sms" });
+      const { data, error } = await supabase.auth.verifyOtp({ phone, token: otp, type: "sms" });
       if (error) throw error;
+      // Persist name + pincode onto the profile (handle_new_user trigger creates the row).
+      const uid = data.user?.id;
+      if (uid && (name || pincode)) {
+        await supabase.from("profiles").update({
+          ...(name ? { name } : {}),
+          ...(pincode ? { pincode } : {}),
+        }).eq("id", uid);
+      }
       toast.success("Signed in!");
     } catch (err: any) {
       toast.error(err.message || "Invalid OTP");
