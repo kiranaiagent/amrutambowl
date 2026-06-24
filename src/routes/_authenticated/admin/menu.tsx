@@ -114,7 +114,16 @@ function MenuPage() {
       const { error } = await supabase.from("menu_items").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); qc.invalidateQueries({ queryKey: ["addons-admin"] }); toast.success("Deleted"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); toast.success("Deleted"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const duplicate = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("duplicate_menu_item", { _id: id });
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); toast.success("Duplicated — find the copy in Inactive"); },
     onError: (e: any) => toast.error(e.message),
   });
 
