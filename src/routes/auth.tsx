@@ -125,12 +125,24 @@ function AuthPage() {
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Sending…" : "Send OTP on WhatsApp"}
+              <p className="text-xs text-muted-foreground mt-1">10-digit Indian numbers auto-prefix +91.</p>
+            </div>
+            <div>
+              <Label>Delivery pincode <span className="text-muted-foreground">(optional now)</span></Label>
+              <Input
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                maxLength={6}
+                value={pincode}
+                onChange={(e) => setPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="e.g. 560001"
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Sending…" : "Send OTP on WhatsApp"}
             </Button>
           </form>
         ) : (
-          <form onSubmit={verifyOtp} className="mt-6 space-y-4">
-            <div>
-              <Label>6-digit code</Label>
               <Input
                 inputMode="numeric"
                 pattern="[0-9]*"
