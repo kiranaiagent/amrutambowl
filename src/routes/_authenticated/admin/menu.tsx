@@ -257,7 +257,7 @@ function MenuPage() {
                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
                     <StatusBadge status={it.status} />
                     {!it.is_available && <Badge variant="destructive" className="text-[10px]">Sold out</Badge>}
-                    {it.is_addon && <Badge variant="secondary" className="text-[10px]">Add-on</Badge>}
+                    {!it.is_available && <Badge variant="destructive" className="text-[10px]">Sold out</Badge>}
                   </div>
                 </div>
                 <div className="text-right">
