@@ -14,51 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      add_ons: {
-        Row: {
-          allergens: string[] | null
-          category: string
-          created_at: string
-          description: string | null
-          food_type: Database["public"]["Enums"]["food_type"]
-          id: string
-          image_url: string | null
-          is_active: boolean
-          name: string
-          price_inr: number
-          status: Database["public"]["Enums"]["content_status"]
-          updated_at: string
-        }
-        Insert: {
-          allergens?: string[] | null
-          category?: string
-          created_at?: string
-          description?: string | null
-          food_type?: Database["public"]["Enums"]["food_type"]
-          id?: string
-          image_url?: string | null
-          is_active?: boolean
-          name: string
-          price_inr?: number
-          status?: Database["public"]["Enums"]["content_status"]
-          updated_at?: string
-        }
-        Update: {
-          allergens?: string[] | null
-          category?: string
-          created_at?: string
-          description?: string | null
-          food_type?: Database["public"]["Enums"]["food_type"]
-          id?: string
-          image_url?: string | null
-          is_active?: boolean
-          name?: string
-          price_inr?: number
-          status?: Database["public"]["Enums"]["content_status"]
-          updated_at?: string
-        }
-        Relationships: []
-      }
       menu_items: {
         Row: {
           allergens: string[] | null
@@ -73,7 +28,6 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
-          is_addon: boolean
           is_available: boolean
           meal_type: Database["public"]["Enums"]["meal_type"]
           name: string
@@ -97,7 +51,6 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
-          is_addon?: boolean
           is_available?: boolean
           meal_type?: Database["public"]["Enums"]["meal_type"]
           name: string
@@ -121,7 +74,6 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
-          is_addon?: boolean
           is_available?: boolean
           meal_type?: Database["public"]["Enums"]["meal_type"]
           name?: string
@@ -326,7 +278,9 @@ export type Database = {
           billing_cycle: Database["public"]["Enums"]["billing_cycle"]
           created_at: string
           days_per_week: number
+          delivery_days: number[]
           description: string | null
+          duration_days: number
           goal_type: Database["public"]["Enums"]["goal_type"]
           id: string
           image_url: string | null
@@ -334,6 +288,8 @@ export type Database = {
           meals_per_day: number
           name: string
           price_inr: number
+          start_date: string | null
+          start_day_of_week: number | null
           status: Database["public"]["Enums"]["content_status"]
           updated_at: string
         }
@@ -341,7 +297,9 @@ export type Database = {
           billing_cycle?: Database["public"]["Enums"]["billing_cycle"]
           created_at?: string
           days_per_week?: number
+          delivery_days?: number[]
           description?: string | null
+          duration_days?: number
           goal_type?: Database["public"]["Enums"]["goal_type"]
           id?: string
           image_url?: string | null
@@ -349,6 +307,8 @@ export type Database = {
           meals_per_day?: number
           name: string
           price_inr?: number
+          start_date?: string | null
+          start_day_of_week?: number | null
           status?: Database["public"]["Enums"]["content_status"]
           updated_at?: string
         }
@@ -356,7 +316,9 @@ export type Database = {
           billing_cycle?: Database["public"]["Enums"]["billing_cycle"]
           created_at?: string
           days_per_week?: number
+          delivery_days?: number[]
           description?: string | null
+          duration_days?: number
           goal_type?: Database["public"]["Enums"]["goal_type"]
           id?: string
           image_url?: string | null
@@ -364,6 +326,8 @@ export type Database = {
           meals_per_day?: number
           name?: string
           price_inr?: number
+          start_date?: string | null
+          start_day_of_week?: number | null
           status?: Database["public"]["Enums"]["content_status"]
           updated_at?: string
         }
@@ -479,13 +443,6 @@ export type Database = {
           subscription_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "subscription_addons_addon_id_fkey"
-            columns: ["addon_id"]
-            isOneToOne: false
-            referencedRelation: "add_ons"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "subscription_addons_subscription_id_fkey"
             columns: ["subscription_id"]
@@ -641,6 +598,8 @@ export type Database = {
     }
     Functions: {
       claim_admin_if_none: { Args: never; Returns: boolean }
+      duplicate_menu_item: { Args: { _id: string }; Returns: string }
+      duplicate_plan: { Args: { _id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -651,7 +610,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "customer"
-      billing_cycle: "weekly" | "monthly" | "daily" | "custom_dates"
+      billing_cycle:
+        | "weekly"
+        | "monthly"
+        | "daily"
+        | "custom_dates"
+        | "biweekly"
       content_status: "active" | "inactive" | "archived"
       delivery_slot: "breakfast" | "lunch" | "dinner"
       food_type: "veg" | "non-veg" | "egg" | "jain"
@@ -788,7 +752,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "customer"],
-      billing_cycle: ["weekly", "monthly", "daily", "custom_dates"],
+      billing_cycle: ["weekly", "monthly", "daily", "custom_dates", "biweekly"],
       content_status: ["active", "inactive", "archived"],
       delivery_slot: ["breakfast", "lunch", "dinner"],
       food_type: ["veg", "non-veg", "egg", "jain"],
