@@ -87,7 +87,7 @@ function MenuPage() {
         if (error) throw error;
       }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); qc.invalidateQueries({ queryKey: ["addons-admin"] }); setOpen(false); toast.success("Saved"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["menu_items"] }); setOpen(false); toast.success("Saved"); },
     onError: (e: any) => toast.error(e.message),
   });
 
