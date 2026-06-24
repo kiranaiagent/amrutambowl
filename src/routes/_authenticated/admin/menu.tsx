@@ -18,7 +18,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { uploadMealImage } from "@/lib/storage";
 import { MealImage } from "@/components/MealImage";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2, Copy } from "lucide-react";
 import { StatusBadge, StatusControl, StatusFilterTabs, type ContentStatus } from "@/components/admin/StatusControl";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
