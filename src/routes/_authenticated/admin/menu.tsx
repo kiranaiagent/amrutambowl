@@ -40,7 +40,6 @@ type Item = {
   meal_type: MealType;
   serving_size: string | null;
   is_available: boolean;
-  is_addon: boolean;
   status: ContentStatus;
 };
 
