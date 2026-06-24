@@ -216,14 +216,8 @@ function MenuPage() {
                   </div>
                   <Switch checked={editing?.is_available ?? true} onCheckedChange={(v) => setEditing({ ...editing, is_available: v })} />
                 </label>
-                <label className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="font-medium text-sm">Also available as an add-on</div>
-                    <div className="text-xs text-muted-foreground">Shows up in customer's add-ons picker.</div>
-                  </div>
-                  <Switch checked={editing?.is_addon ?? false} onCheckedChange={(v) => setEditing({ ...editing, is_addon: v })} />
-                </label>
               </div>
+
               <div className="md:col-span-2 flex items-center gap-3">
                 <Label>Status</Label>
                 <Select value={editing?.status ?? "active"} onValueChange={(v) => setEditing({ ...editing, status: v as ContentStatus })}>
