@@ -28,6 +28,7 @@ function AuthPage() {
   const [channel, setChannel] = useState<"whatsapp" | "sms">("whatsapp");
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
+  const [pincode, setPincode] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
