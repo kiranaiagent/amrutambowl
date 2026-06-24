@@ -28,7 +28,6 @@ import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminPincodesRouteImport } from './routes/_authenticated/admin/pincodes'
 import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenticated/admin/orders'
 import { Route as AuthenticatedAdminMenuRouteImport } from './routes/_authenticated/admin/menu'
-import { Route as AuthenticatedAdminAddonsRouteImport } from './routes/_authenticated/admin/addons'
 
 const CartRoute = CartRouteImport.update({
   id: '/cart',
@@ -129,12 +128,6 @@ const AuthenticatedAdminMenuRoute = AuthenticatedAdminMenuRouteImport.update({
   path: '/menu',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const AuthenticatedAdminAddonsRoute =
-  AuthenticatedAdminAddonsRouteImport.update({
-    id: '/addons',
-    path: '/addons',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -147,7 +140,6 @@ export interface FileRoutesByFullPath {
   '/my-subscription': typeof AuthenticatedMySubscriptionRoute
   '/plans/$id': typeof PlansIdRoute
   '/plans/': typeof PlansIndexRoute
-  '/admin/addons': typeof AuthenticatedAdminAddonsRoute
   '/admin/menu': typeof AuthenticatedAdminMenuRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/pincodes': typeof AuthenticatedAdminPincodesRoute
@@ -167,7 +159,6 @@ export interface FileRoutesByTo {
   '/my-subscription': typeof AuthenticatedMySubscriptionRoute
   '/plans/$id': typeof PlansIdRoute
   '/plans': typeof PlansIndexRoute
-  '/admin/addons': typeof AuthenticatedAdminAddonsRoute
   '/admin/menu': typeof AuthenticatedAdminMenuRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/pincodes': typeof AuthenticatedAdminPincodesRoute
@@ -190,7 +181,6 @@ export interface FileRoutesById {
   '/_authenticated/my-subscription': typeof AuthenticatedMySubscriptionRoute
   '/plans/$id': typeof PlansIdRoute
   '/plans/': typeof PlansIndexRoute
-  '/_authenticated/admin/addons': typeof AuthenticatedAdminAddonsRoute
   '/_authenticated/admin/menu': typeof AuthenticatedAdminMenuRoute
   '/_authenticated/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/_authenticated/admin/pincodes': typeof AuthenticatedAdminPincodesRoute
@@ -213,7 +203,6 @@ export interface FileRouteTypes {
     | '/my-subscription'
     | '/plans/$id'
     | '/plans/'
-    | '/admin/addons'
     | '/admin/menu'
     | '/admin/orders'
     | '/admin/pincodes'
@@ -233,7 +222,6 @@ export interface FileRouteTypes {
     | '/my-subscription'
     | '/plans/$id'
     | '/plans'
-    | '/admin/addons'
     | '/admin/menu'
     | '/admin/orders'
     | '/admin/pincodes'
@@ -255,7 +243,6 @@ export interface FileRouteTypes {
     | '/_authenticated/my-subscription'
     | '/plans/$id'
     | '/plans/'
-    | '/_authenticated/admin/addons'
     | '/_authenticated/admin/menu'
     | '/_authenticated/admin/orders'
     | '/_authenticated/admin/pincodes'
@@ -411,18 +398,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminMenuRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/admin/addons': {
-      id: '/_authenticated/admin/addons'
-      path: '/addons'
-      fullPath: '/admin/addons'
-      preLoaderRoute: typeof AuthenticatedAdminAddonsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
   }
 }
 
 interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminAddonsRoute: typeof AuthenticatedAdminAddonsRoute
   AuthenticatedAdminMenuRoute: typeof AuthenticatedAdminMenuRoute
   AuthenticatedAdminOrdersRoute: typeof AuthenticatedAdminOrdersRoute
   AuthenticatedAdminPincodesRoute: typeof AuthenticatedAdminPincodesRoute
@@ -434,7 +413,6 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminAddonsRoute: AuthenticatedAdminAddonsRoute,
   AuthenticatedAdminMenuRoute: AuthenticatedAdminMenuRoute,
   AuthenticatedAdminOrdersRoute: AuthenticatedAdminOrdersRoute,
   AuthenticatedAdminPincodesRoute: AuthenticatedAdminPincodesRoute,
