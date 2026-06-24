@@ -195,7 +195,7 @@ function Checkout() {
         // Persist add-ons
         const addonRows = Object.entries(addonQty)
           .filter(([, q]) => q > 0)
-          .map(([addon_id, qty]) => ({ subscription_id: sub.id, addon_id, qty }));
+          .map(([menu_item_id, qty]) => ({ subscription_id: sub.id, menu_item_id, qty }));
         if (addonRows.length) {
           const { error } = await supabase.from("subscription_addons").insert(addonRows);
           if (error) throw error;
