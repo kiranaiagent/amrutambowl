@@ -422,27 +422,34 @@ export type Database = {
       }
       subscription_addons: {
         Row: {
-          addon_id: string
           created_at: string
           id: string
+          menu_item_id: string
           qty: number
           subscription_id: string
         }
         Insert: {
-          addon_id: string
           created_at?: string
           id?: string
+          menu_item_id: string
           qty?: number
           subscription_id: string
         }
         Update: {
-          addon_id?: string
           created_at?: string
           id?: string
+          menu_item_id?: string
           qty?: number
           subscription_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "subscription_addons_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "subscription_addons_subscription_id_fkey"
             columns: ["subscription_id"]
