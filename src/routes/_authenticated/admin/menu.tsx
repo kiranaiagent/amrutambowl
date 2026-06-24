@@ -55,7 +55,7 @@ function emptyItem(): Partial<Item> {
   return {
     name: "", description: "", price_inr: 0, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0,
     food_type: "veg", allergens: [], tags: [], meal_type: "lunch", serving_size: "",
-    is_available: true, is_addon: false, status: "active", image_url: "",
+    is_available: true, status: "active", image_url: "",
   };
 }
 
