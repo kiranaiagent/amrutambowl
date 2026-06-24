@@ -290,6 +290,7 @@ function MenuPage() {
                   Available
                 </label>
                 <Button size="sm" variant="ghost" onClick={() => { setEditing(it); setOpen(true); }}><Pencil className="h-4 w-4 mr-1" />Edit</Button>
+                <Button size="sm" variant="ghost" onClick={() => duplicate.mutate(it.id)} disabled={duplicate.isPending}><Copy className="h-4 w-4 mr-1" />Copy</Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
