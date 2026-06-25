@@ -242,6 +242,11 @@ function PlansPage() {
                 </Select>
                 <p className="text-xs text-muted-foreground ml-2">Can't activate until you add menu items below.</p>
               </div>
+              <div className="md:col-span-2 flex items-center gap-2">
+                <Checkbox id="is_popular" checked={!!(editing as any)?.is_popular}
+                  onCheckedChange={(v) => setEditing({ ...editing, is_popular: !!v } as any)} />
+                <Label htmlFor="is_popular" className="cursor-pointer">Mark as Popular (shown in Build-a-Bowl & top of Plans)</Label>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
