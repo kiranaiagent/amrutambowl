@@ -142,6 +142,32 @@ function PlanDetail() {
               </Card>
             </div>
 
+            {/* Menu gallery */}
+            {(itemsQ.data?.length ?? 0) > 0 && (() => {
+              const uniq = Array.from(new Map((itemsQ.data ?? [])
+                .map((r: any) => r.menu_items).filter((m: any) => m).map((m: any) => [m.id, m])).values()) as any[];
+              return (
+                <section className="mt-8">
+                  <h2 className="font-display text-2xl font-bold">What you'll be eating</h2>
+                  <p className="text-sm text-muted-foreground">A look at the dishes in this plan.</p>
+                  <div className="mt-4 grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+                    {uniq.map((m: any) => (
+                      <Card key={m.id} className="overflow-hidden">
+                        <MealImage path={m.image_url} alt={m.name} className="h-32 w-full object-cover" />
+                        <div className="p-2.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className={m.food_type === "veg" || m.food_type === "jain" ? "veg-dot" : "nonveg-dot"} />
+                            <div className="text-sm font-medium truncate">{m.name}</div>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">{m.calories} kcal · {m.protein_g}g P</div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </section>
+              );
+            })()}
+
             {/* Mode toggle */}
             <div className="mt-10 flex items-center justify-between flex-wrap gap-3">
               <div>

@@ -16,6 +16,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlansIndexRouteImport } from './routes/plans.index'
 import { Route as PlansIdRouteImport } from './routes/plans.$id'
+import { Route as OrderConfirmationIdRouteImport } from './routes/order-confirmation.$id'
 import { Route as AuthenticatedMySubscriptionRouteImport } from './routes/_authenticated/my-subscription'
 import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -26,6 +27,7 @@ import { Route as AuthenticatedAdminSubscriptionsRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
 import { Route as AuthenticatedAdminPincodesRouteImport } from './routes/_authenticated/admin/pincodes'
+import { Route as AuthenticatedAdminPincodeRequestsRouteImport } from './routes/_authenticated/admin/pincode-requests'
 import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenticated/admin/orders'
 import { Route as AuthenticatedAdminMenuRouteImport } from './routes/_authenticated/admin/menu'
 
@@ -61,6 +63,11 @@ const PlansIndexRoute = PlansIndexRouteImport.update({
 const PlansIdRoute = PlansIdRouteImport.update({
   id: '/plans/$id',
   path: '/plans/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderConfirmationIdRoute = OrderConfirmationIdRouteImport.update({
+  id: '/order-confirmation/$id',
+  path: '/order-confirmation/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedMySubscriptionRoute =
@@ -117,6 +124,12 @@ const AuthenticatedAdminPincodesRoute =
     path: '/pincodes',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminPincodeRequestsRoute =
+  AuthenticatedAdminPincodeRequestsRouteImport.update({
+    id: '/pincode-requests',
+    path: '/pincode-requests',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminOrdersRoute =
   AuthenticatedAdminOrdersRouteImport.update({
     id: '/orders',
@@ -138,10 +151,12 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/my-subscription': typeof AuthenticatedMySubscriptionRoute
+  '/order-confirmation/$id': typeof OrderConfirmationIdRoute
   '/plans/$id': typeof PlansIdRoute
   '/plans/': typeof PlansIndexRoute
   '/admin/menu': typeof AuthenticatedAdminMenuRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
+  '/admin/pincode-requests': typeof AuthenticatedAdminPincodeRequestsRoute
   '/admin/pincodes': typeof AuthenticatedAdminPincodesRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
@@ -157,10 +172,12 @@ export interface FileRoutesByTo {
   '/account': typeof AuthenticatedAccountRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/my-subscription': typeof AuthenticatedMySubscriptionRoute
+  '/order-confirmation/$id': typeof OrderConfirmationIdRoute
   '/plans/$id': typeof PlansIdRoute
   '/plans': typeof PlansIndexRoute
   '/admin/menu': typeof AuthenticatedAdminMenuRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
+  '/admin/pincode-requests': typeof AuthenticatedAdminPincodeRequestsRoute
   '/admin/pincodes': typeof AuthenticatedAdminPincodesRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
@@ -179,10 +196,12 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
   '/_authenticated/my-subscription': typeof AuthenticatedMySubscriptionRoute
+  '/order-confirmation/$id': typeof OrderConfirmationIdRoute
   '/plans/$id': typeof PlansIdRoute
   '/plans/': typeof PlansIndexRoute
   '/_authenticated/admin/menu': typeof AuthenticatedAdminMenuRoute
   '/_authenticated/admin/orders': typeof AuthenticatedAdminOrdersRoute
+  '/_authenticated/admin/pincode-requests': typeof AuthenticatedAdminPincodeRequestsRoute
   '/_authenticated/admin/pincodes': typeof AuthenticatedAdminPincodesRoute
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
@@ -201,10 +220,12 @@ export interface FileRouteTypes {
     | '/admin'
     | '/checkout'
     | '/my-subscription'
+    | '/order-confirmation/$id'
     | '/plans/$id'
     | '/plans/'
     | '/admin/menu'
     | '/admin/orders'
+    | '/admin/pincode-requests'
     | '/admin/pincodes'
     | '/admin/plans'
     | '/admin/settings'
@@ -220,10 +241,12 @@ export interface FileRouteTypes {
     | '/account'
     | '/checkout'
     | '/my-subscription'
+    | '/order-confirmation/$id'
     | '/plans/$id'
     | '/plans'
     | '/admin/menu'
     | '/admin/orders'
+    | '/admin/pincode-requests'
     | '/admin/pincodes'
     | '/admin/plans'
     | '/admin/settings'
@@ -241,10 +264,12 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/checkout'
     | '/_authenticated/my-subscription'
+    | '/order-confirmation/$id'
     | '/plans/$id'
     | '/plans/'
     | '/_authenticated/admin/menu'
     | '/_authenticated/admin/orders'
+    | '/_authenticated/admin/pincode-requests'
     | '/_authenticated/admin/pincodes'
     | '/_authenticated/admin/plans'
     | '/_authenticated/admin/settings'
@@ -259,6 +284,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BowlRoute: typeof BowlRoute
   CartRoute: typeof CartRoute
+  OrderConfirmationIdRoute: typeof OrderConfirmationIdRoute
   PlansIdRoute: typeof PlansIdRoute
   PlansIndexRoute: typeof PlansIndexRoute
 }
@@ -312,6 +338,13 @@ declare module '@tanstack/react-router' {
       path: '/plans/$id'
       fullPath: '/plans/$id'
       preLoaderRoute: typeof PlansIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order-confirmation/$id': {
+      id: '/order-confirmation/$id'
+      path: '/order-confirmation/$id'
+      fullPath: '/order-confirmation/$id'
+      preLoaderRoute: typeof OrderConfirmationIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/my-subscription': {
@@ -384,6 +417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminPincodesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/pincode-requests': {
+      id: '/_authenticated/admin/pincode-requests'
+      path: '/pincode-requests'
+      fullPath: '/admin/pincode-requests'
+      preLoaderRoute: typeof AuthenticatedAdminPincodeRequestsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/orders': {
       id: '/_authenticated/admin/orders'
       path: '/orders'
@@ -404,6 +444,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminMenuRoute: typeof AuthenticatedAdminMenuRoute
   AuthenticatedAdminOrdersRoute: typeof AuthenticatedAdminOrdersRoute
+  AuthenticatedAdminPincodeRequestsRoute: typeof AuthenticatedAdminPincodeRequestsRoute
   AuthenticatedAdminPincodesRoute: typeof AuthenticatedAdminPincodesRoute
   AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
@@ -415,6 +456,8 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminMenuRoute: AuthenticatedAdminMenuRoute,
   AuthenticatedAdminOrdersRoute: AuthenticatedAdminOrdersRoute,
+  AuthenticatedAdminPincodeRequestsRoute:
+    AuthenticatedAdminPincodeRequestsRoute,
   AuthenticatedAdminPincodesRoute: AuthenticatedAdminPincodesRoute,
   AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
@@ -449,6 +492,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BowlRoute: BowlRoute,
   CartRoute: CartRoute,
+  OrderConfirmationIdRoute: OrderConfirmationIdRoute,
   PlansIdRoute: PlansIdRoute,
   PlansIndexRoute: PlansIndexRoute,
 }

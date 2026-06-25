@@ -133,13 +133,17 @@ export type Database = {
       }
       orders: {
         Row: {
+          accepted_at: string | null
           created_at: string
+          delivered_at: string | null
           delivery_address: string | null
           delivery_date: string
           delivery_pincode: string | null
           id: string
           kind: string
           notes: string | null
+          out_for_delivery_at: string | null
+          preferred_time: string | null
           slot: Database["public"]["Enums"]["delivery_slot"]
           status: Database["public"]["Enums"]["order_status"]
           subscription_id: string | null
@@ -148,13 +152,17 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          accepted_at?: string | null
           created_at?: string
+          delivered_at?: string | null
           delivery_address?: string | null
           delivery_date: string
           delivery_pincode?: string | null
           id?: string
           kind?: string
           notes?: string | null
+          out_for_delivery_at?: string | null
+          preferred_time?: string | null
           slot: Database["public"]["Enums"]["delivery_slot"]
           status?: Database["public"]["Enums"]["order_status"]
           subscription_id?: string | null
@@ -163,13 +171,17 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          accepted_at?: string | null
           created_at?: string
+          delivered_at?: string | null
           delivery_address?: string | null
           delivery_date?: string
           delivery_pincode?: string | null
           id?: string
           kind?: string
           notes?: string | null
+          out_for_delivery_at?: string | null
+          preferred_time?: string | null
           slot?: Database["public"]["Enums"]["delivery_slot"]
           status?: Database["public"]["Enums"]["order_status"]
           subscription_id?: string | null
@@ -231,6 +243,42 @@ export type Database = {
           },
         ]
       }
+      pincode_requests: {
+        Row: {
+          created_at: string
+          id: string
+          name: string | null
+          notes: string | null
+          phone: string | null
+          pincode: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          pincode: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          pincode?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       plan_items: {
         Row: {
           created_at: string
@@ -285,6 +333,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          is_popular: boolean
           meals_per_day: number
           name: string
           price_inr: number
@@ -304,6 +353,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_popular?: boolean
           meals_per_day?: number
           name: string
           price_inr?: number
@@ -323,6 +373,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_popular?: boolean
           meals_per_day?: number
           name?: string
           price_inr?: number
@@ -516,10 +567,12 @@ export type Database = {
           id: string
           meals_per_day: number
           next_billing_date: string | null
-          plan_id: string
+          plan_id: string | null
           portion_size: string | null
+          preferred_time: string | null
           razorpay_subscription_id: string | null
           selected_dates: string[] | null
+          source: string
           special_instructions: string | null
           start_date: string
           status: Database["public"]["Enums"]["sub_status"]
@@ -537,10 +590,12 @@ export type Database = {
           id?: string
           meals_per_day?: number
           next_billing_date?: string | null
-          plan_id: string
+          plan_id?: string | null
           portion_size?: string | null
+          preferred_time?: string | null
           razorpay_subscription_id?: string | null
           selected_dates?: string[] | null
+          source?: string
           special_instructions?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["sub_status"]
@@ -558,10 +613,12 @@ export type Database = {
           id?: string
           meals_per_day?: number
           next_billing_date?: string | null
-          plan_id?: string
+          plan_id?: string | null
           portion_size?: string | null
+          preferred_time?: string | null
           razorpay_subscription_id?: string | null
           selected_dates?: string[] | null
+          source?: string
           special_instructions?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["sub_status"]
