@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -8,141 +8,458 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState, useMemo } from "react";
-import { useCart } from "@/lib/cart";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Minus, Filter } from "lucide-react";
+import { ArrowRight, Filter, Search, Sparkles, Trash2 } from "lucide-react";
 
+/** Build-a-Bowl: schedule + per-delivery menu picker. */
 export const Route = createFileRoute("/bowl")({
-  head: () => ({ meta: [{ title: "Build a Bowl — Amrutam" }, { name: "description", content: "Pick your own healthy meals. Add to bowl, customize portion, checkout." }] }),
+  head: () => ({
+    meta: [
+      { title: "Build Your Bowl — Amrutam Bowl" },
+      { name: "description", content: "Design your own subscription. Pick cycle, days, time and menu for each delivery." },
+    ],
+  }),
   component: BowlPage,
-  errorComponent: ({ error }) => <div className="p-8">Couldn't load menu: {error.message}</div>,
+  errorComponent: ({ error }) => <div className="p-8">Couldn't load: {error.message}</div>,
 });
 
+export type BowlCycle = "daily" | "weekly" | "biweekly" | "monthly";
+export type BowlSlot = "breakfast" | "lunch" | "dinner";
+export type BowlPick = { date: string; slot: BowlSlot; menu_item_id: string | null };
+
+const BOWL_KEY = "amrutam.bowl.config.v1";
+const SLOTS: BowlSlot[] = ["breakfast", "lunch", "dinner"];
+const WEEKDAYS = [
+  { v: 0, label: "Sun" }, { v: 1, label: "Mon" }, { v: 2, label: "Tue" },
+  { v: 3, label: "Wed" }, { v: 4, label: "Thu" }, { v: 5, label: "Fri" }, { v: 6, label: "Sat" },
+];
+const CYCLE_DEFAULT_DURATION: Record<BowlCycle, number> = { daily: 1, weekly: 7, biweekly: 14, monthly: 28 };
 const FOOD_FILTERS = ["all", "veg", "non-veg", "egg", "jain"] as const;
 
-function BowlPage() {
-  const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<(typeof FOOD_FILTERS)[number]>("all");
-  const { add, lines, setQty, total, count } = useCart();
+function isoDate(d: Date) { return d.toISOString().slice(0, 10); }
+function addDays(base: Date, n: number) { const d = new Date(base); d.setDate(d.getDate() + n); return d; }
+function dayLabel(dateStr: string) {
+  const d = new Date(dateStr);
+  return `${WEEKDAYS[d.getDay()].label} ${d.getDate()}/${d.getMonth() + 1}`;
+}
 
-  const itemsQ = useQuery({
-    queryKey: ["menu-public"],
+function BowlPage() {
+  const nav = useNavigate();
+  // ---- Schedule state ----
+  const tomorrow = useMemo(() => addDays(new Date(), 1), []);
+  const [cycle, setCycle] = useState<BowlCycle>("weekly");
+  const [mealsPerDay, setMealsPerDay] = useState(1);
+  const [duration, setDuration] = useState(7);
+  const [deliveryDays, setDeliveryDays] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [startDate, setStartDate] = useState(isoDate(tomorrow));
+  const [preferredTime, setPreferredTime] = useState("12:30");
+  const [primarySlot, setPrimarySlot] = useState<BowlSlot>("lunch");
+
+  // ---- Menu picks: keyed `${date}|${slot}` -> menu_item_id ----
+  const [picks, setPicks] = useState<Record<string, string | null>>({});
+
+  // ---- Data ----
+  const menuQ = useQuery({
+    queryKey: ["bowl-menu"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("menu_items").select("*").eq("status", "active").order("name");
+      const { data, error } = await supabase
+        .from("menu_items").select("*").eq("status", "active").eq("is_available", true).order("name");
       if (error) throw error;
-      return data;
+      return data as any[];
+    },
+  });
+  const popularPlansQ = useQuery({
+    queryKey: ["bowl-popular-plans"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("plans").select("id,name,description,image_url,price_inr,billing_cycle,meals_per_day,delivery_days,is_popular")
+        .eq("status", "active").order("is_popular" as any, { ascending: false }).limit(8);
+      if (error) throw error;
+      return data as any[];
     },
   });
 
-  const items = useMemo(() => {
-    return (itemsQ.data ?? []).filter((it: any) => {
-      if (filter !== "all" && it.food_type !== filter) return false;
-      if (q && !it.name.toLowerCase().includes(q.toLowerCase())) return false;
-      return true;
+  // Compute the delivery schedule (date list × slots/day)
+  const deliveries = useMemo(() => {
+    const out: { date: string; slot: BowlSlot }[] = [];
+    const slotsList = SLOTS.slice(0, Math.max(1, Math.min(3, mealsPerDay)));
+    if (cycle === "daily") {
+      for (let i = 0; i < duration; i++) {
+        const d = addDays(new Date(startDate), i);
+        slotsList.forEach((s) => out.push({ date: isoDate(d), slot: s }));
+      }
+      return out;
+    }
+    const span = duration;
+    const start = new Date(startDate);
+    for (let i = 0; i < span; i++) {
+      const d = addDays(start, i);
+      if (!deliveryDays.includes(d.getDay())) continue;
+      slotsList.forEach((s) => out.push({ date: isoDate(d), slot: s }));
+    }
+    return out;
+  }, [cycle, duration, deliveryDays, startDate, mealsPerDay]);
+
+  // Clean up stale picks (keys not in current deliveries)
+  useEffect(() => {
+    setPicks((cur) => {
+      const valid = new Set(deliveries.map((d) => `${d.date}|${d.slot}`));
+      const next: Record<string, string | null> = {};
+      for (const [k, v] of Object.entries(cur)) if (valid.has(k)) next[k] = v;
+      return next;
     });
-  }, [itemsQ.data, q, filter]);
+  }, [deliveries.length]);
+
+  const menuById = useMemo(() => {
+    const m = new Map<string, any>();
+    (menuQ.data ?? []).forEach((it) => m.set(it.id, it));
+    return m;
+  }, [menuQ.data]);
+
+  const subtotal = useMemo(() => {
+    let sum = 0;
+    for (const d of deliveries) {
+      const id = picks[`${d.date}|${d.slot}`];
+      if (!id) continue;
+      const mi = menuById.get(id);
+      if (mi) sum += Number(mi.price_inr);
+    }
+    return sum;
+  }, [deliveries, picks, menuById]);
+
+  const filled = useMemo(() => deliveries.filter((d) => picks[`${d.date}|${d.slot}`]).length, [deliveries, picks]);
+
+  // ---- Actions ----
+  const toggleDay = (v: number) => {
+    setDeliveryDays((cur) => (cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v].sort()));
+  };
+  const setCycleSafe = (c: BowlCycle) => {
+    setCycle(c);
+    setDuration(CYCLE_DEFAULT_DURATION[c]);
+    if (c === "daily") setDeliveryDays([0, 1, 2, 3, 4, 5, 6]);
+  };
+
+  const loadFromPlan = async (planId: string) => {
+    const { data: items, error } = await supabase
+      .from("plan_items").select("day_of_week, slot, menu_item_id").eq("plan_id", planId);
+    if (error) { toast.error(error.message); return; }
+    // Map plan day_of_week (0-6 or higher for bi/monthly) onto our concrete dates: for each delivery,
+    // find a plan item whose day_of_week mod 7 matches and slot matches.
+    setPicks((cur) => {
+      const next = { ...cur };
+      deliveries.forEach((d) => {
+        const dow = new Date(d.date).getDay();
+        const candidate = (items ?? []).find((pi: any) => (pi.day_of_week % 7) === dow && pi.slot === d.slot)
+          ?? (items ?? []).find((pi: any) => pi.slot === d.slot);
+        if (candidate?.menu_item_id) next[`${d.date}|${d.slot}`] = candidate.menu_item_id;
+      });
+      return next;
+    });
+    toast.success("Loaded popular plan — edit any meal below.");
+  };
+
+  const clearAll = () => setPicks({});
+
+  const continueToCheckout = () => {
+    if (filled === 0) { toast.error("Pick at least one meal"); return; }
+    const config = {
+      kind: "bowl",
+      cycle, mealsPerDay, duration, deliveryDays,
+      startDate, preferredTime, primarySlot,
+      picks: deliveries.map((d) => ({ date: d.date, slot: d.slot, menu_item_id: picks[`${d.date}|${d.slot}`] ?? null })),
+      subtotal,
+    };
+    try { sessionStorage.setItem(BOWL_KEY, JSON.stringify(config)); } catch {}
+    nav({ to: "/checkout", search: { bowl: "1" } as any });
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 grid gap-6 lg:grid-cols-[1fr_320px]">
-        <section>
-          <h1 className="font-display text-3xl font-bold">Build Your Bowl</h1>
-          <p className="text-muted-foreground">Pick what you love. We deliver fresh, never frozen.</p>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 md:py-10">
+        <div className="flex items-start justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="font-display text-3xl md:text-4xl font-bold">Build Your Bowl</h1>
+            <p className="text-muted-foreground">Pick a schedule, then choose what's on each plate. We deliver fresh, never frozen.</p>
+          </div>
+          <Link to="/plans" className="text-sm text-primary hover:underline">Or browse popular plans →</Link>
+        </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <Input placeholder="Search meals…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-xs" />
-            <div className="flex items-center gap-1 ml-auto">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              {FOOD_FILTERS.map((f) => (
-                <button key={f} onClick={() => setFilter(f)}
-                  className={`rounded-full border px-3 py-1 text-xs capitalize ${filter === f ? "bg-primary text-primary-foreground border-primary" : "bg-secondary"}`}>
-                  {f}
+        {/* Step 1 — Schedule */}
+        <Card className="mt-6 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="rounded-full bg-primary/10 text-primary text-xs font-bold px-2 py-0.5">1</span>
+            <h2 className="font-semibold">Set your delivery schedule</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div>
+              <Label>Plan cycle</Label>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {(["daily","weekly","biweekly","monthly"] as BowlCycle[]).map((c) => (
+                  <button key={c} onClick={() => setCycleSafe(c)}
+                    className={`px-3 py-1.5 text-sm rounded-md border capitalize ${cycle === c ? "bg-primary text-primary-foreground border-primary" : "hover:bg-secondary"}`}>
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label>Meals / day</Label>
+              <Select value={String(mealsPerDay)} onValueChange={(v) => setMealsPerDay(+v)}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[1,2,3].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Primary delivery slot</Label>
+              <Select value={primarySlot} onValueChange={(v) => setPrimarySlot(v as BowlSlot)}>
+                <SelectTrigger className="mt-1 capitalize"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SLOTS.map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Duration (days)</Label>
+              <Input type="number" min={1} max={90} value={duration} className="mt-1"
+                onChange={(e) => setDuration(Math.max(1, +e.target.value))} />
+            </div>
+            <div>
+              <Label>Start date</Label>
+              <Input type="date" value={startDate} min={isoDate(tomorrow)} className="mt-1"
+                onChange={(e) => setStartDate(e.target.value)} />
+            </div>
+            <div>
+              <Label>Preferred time</Label>
+              <Input type="time" value={preferredTime} className="mt-1"
+                onChange={(e) => setPreferredTime(e.target.value)} />
+            </div>
+            {cycle !== "daily" && (
+              <div className="md:col-span-3">
+                <Label>Delivery days</Label>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {WEEKDAYS.map((d) => {
+                    const on = deliveryDays.includes(d.v);
+                    return (
+                      <button key={d.v} onClick={() => toggleDay(d.v)}
+                        className={`px-3 py-1.5 rounded-md text-sm border ${on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-secondary"}`}>
+                        {d.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 rounded-md bg-secondary/40 p-3 text-sm flex flex-wrap items-center gap-3 justify-between">
+            <div>
+              <strong>{deliveries.length}</strong> meal slots over <strong>{duration}</strong> day(s) ·
+              {" "}{filled}/{deliveries.length} chosen
+            </div>
+            <div className="text-muted-foreground text-xs">First delivery: {deliveries[0]?.date ?? "—"} · Last: {deliveries[deliveries.length - 1]?.date ?? "—"}</div>
+          </div>
+        </Card>
+
+        {/* Step 2 — Start from popular OR start blank */}
+        <Card className="mt-5 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="rounded-full bg-primary/10 text-primary text-xs font-bold px-2 py-0.5">2</span>
+            <h2 className="font-semibold">Start from a popular plan (optional)</h2>
+            <Sparkles className="h-4 w-4 text-primary" />
+          </div>
+          {popularPlansQ.data && popularPlansQ.data.length > 0 ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {popularPlansQ.data.map((p) => (
+                <button key={p.id} onClick={() => loadFromPlan(p.id)}
+                  className="text-left rounded-lg border hover:border-primary hover:shadow-sm transition overflow-hidden">
+                  <MealImage path={p.image_url} alt={p.name} className="h-24 w-full object-cover" />
+                  <div className="p-3">
+                    <div className="font-medium text-sm flex items-center gap-1">
+                      {p.is_popular && <Sparkles className="h-3 w-3 text-primary" />}
+                      {p.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground">₹{Number(p.price_inr).toFixed(0)} · {p.billing_cycle}</div>
+                  </div>
                 </button>
               ))}
             </div>
-          </div>
-
-          {itemsQ.isLoading && <div className="mt-6 text-muted-foreground">Loading menu…</div>}
-          {!itemsQ.isLoading && items.length === 0 && (
-            <Card className="mt-6 p-8 text-center text-muted-foreground">No meals match your filter.</Card>
+          ) : (
+            <p className="text-sm text-muted-foreground">No popular plans yet — start blank below.</p>
           )}
+        </Card>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {items.map((it: any) => {
-              const inCart = lines.find((l) => l.id === it.id)?.qty ?? 0;
-              return (
-                <Card key={it.id} className="overflow-hidden flex">
-                  <MealImage path={it.image_url} alt={it.name} className="h-32 w-32 object-cover shrink-0" />
-                  <div className="p-3 flex-1 flex flex-col">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className={it.food_type === "veg" || it.food_type === "jain" ? "veg-dot" : "nonveg-dot"} aria-hidden />
-                          <h3 className="font-semibold leading-tight">{it.name}</h3>
-                        </div>
-                        {it.category && <div className="text-[11px] text-muted-foreground">{it.category}</div>}
-                      </div>
-                      <div className="text-right font-bold">₹{Number(it.price_inr).toFixed(0)}</div>
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{it.description}</p>
-                    <div className="mt-1.5 text-[11px] text-muted-foreground">
-                      {it.calories} kcal · P {it.protein_g}g · C {it.carbs_g}g · F {it.fat_g}g
-                    </div>
-                    {it.allergens?.length > 0 && (
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {it.allergens.map((a: string) => <Badge key={a} variant="outline" className="text-[10px] py-0">⚠ {a}</Badge>)}
-                      </div>
-                    )}
-                    <div className="mt-auto pt-2 flex items-center justify-end gap-2">
-                      {inCart > 0 ? (
-                        <>
-                          <Button size="icon" variant="outline" onClick={() => setQty(it.id, inCart - 1)}><Minus className="h-3.5 w-3.5" /></Button>
-                          <span className="w-6 text-center text-sm font-semibold">{inCart}</span>
-                          <Button size="icon" variant="outline" onClick={() => setQty(it.id, inCart + 1)}><Plus className="h-3.5 w-3.5" /></Button>
-                        </>
-                      ) : (
-                        <Button size="sm" onClick={() => { add({ id: it.id, name: it.name, price_inr: it.price_inr, image_url: it.image_url }); toast.success(`${it.name} added`); }}>
-                          <Plus className="h-3.5 w-3.5 mr-1" /> Add
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
+        {/* Step 3 — Per-delivery menu picker */}
+        <Card className="mt-5 p-5">
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <span className="rounded-full bg-primary/10 text-primary text-xs font-bold px-2 py-0.5">3</span>
+            <h2 className="font-semibold">Choose what's on each plate</h2>
+            <Button size="sm" variant="ghost" className="ml-auto" onClick={clearAll}><Trash2 className="h-3 w-3 mr-1" /> Clear all</Button>
           </div>
-        </section>
 
-        <aside className="lg:sticky lg:top-20 self-start">
-          <Card className="p-5">
-            <h2 className="font-display text-lg font-bold">Your Bowl</h2>
-            <div className="mt-3 space-y-2 max-h-80 overflow-auto">
-              {lines.length === 0 && <div className="text-sm text-muted-foreground">Your bowl is empty. Add meals to get started.</div>}
-              {lines.map((l) => (
-                <div key={l.id} className="flex items-center gap-2 text-sm">
-                  <div className="flex-1 truncate">{l.name}</div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => setQty(l.id, l.qty - 1)} className="h-6 w-6 rounded border">−</button>
-                    <span className="w-5 text-center">{l.qty}</span>
-                    <button onClick={() => setQty(l.id, l.qty + 1)} className="h-6 w-6 rounded border">+</button>
-                  </div>
-                  <div className="w-14 text-right font-medium">₹{(l.price_inr * l.qty).toFixed(0)}</div>
-                </div>
-              ))}
+          {deliveries.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Set a schedule above to start picking meals.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-sm">
+                <thead>
+                  <tr className="text-left text-muted-foreground border-b">
+                    <th className="p-2">Delivery</th>
+                    <th className="p-2">Slot</th>
+                    <th className="p-2">Meal</th>
+                    <th className="p-2 w-32 text-right">Price</th>
+                    <th className="p-2 w-24"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deliveries.map((d) => {
+                    const key = `${d.date}|${d.slot}`;
+                    const picked = picks[key] ? menuById.get(picks[key]!) : null;
+                    return (
+                      <tr key={key} className="border-b last:border-0 align-middle">
+                        <td className="p-2 font-medium">{dayLabel(d.date)}</td>
+                        <td className="p-2 capitalize text-muted-foreground">{d.slot}</td>
+                        <td className="p-2">
+                          {picked ? (
+                            <div className="flex items-center gap-2">
+                              <MealImage path={picked.image_url} alt={picked.name} className="h-10 w-10 rounded object-cover" />
+                              <div>
+                                <div className="font-medium flex items-center gap-1.5">
+                                  <span className={picked.food_type === "veg" || picked.food_type === "jain" ? "veg-dot" : "nonveg-dot"} />
+                                  {picked.name}
+                                </div>
+                                <div className="text-xs text-muted-foreground">{picked.calories} kcal · {picked.protein_g}g P</div>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground italic">— not chosen —</span>
+                          )}
+                        </td>
+                        <td className="p-2 text-right">{picked ? `₹${Number(picked.price_inr).toFixed(0)}` : "—"}</td>
+                        <td className="p-2">
+                          <MealPicker
+                            items={menuQ.data ?? []}
+                            currentId={picks[key] ?? null}
+                            slotHint={d.slot}
+                            onPick={(id) => setPicks((cur) => ({ ...cur, [key]: id }))}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-            <div className="mt-4 border-t pt-3 flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Subtotal ({count})</span>
-              <span className="font-bold text-lg">₹{total.toFixed(0)}</span>
-            </div>
-            <Link to="/cart" className="block">
-              <Button className="w-full mt-3" disabled={lines.length === 0}>Review & Checkout</Button>
-            </Link>
-          </Card>
-        </aside>
+          )}
+        </Card>
+
+        {/* Sticky summary footer */}
+        <Card className="mt-5 p-5 flex items-center justify-between gap-4 flex-wrap sticky bottom-3 shadow-lg">
+          <div>
+            <div className="text-sm text-muted-foreground">{filled} meal{filled === 1 ? "" : "s"} chosen · {cycle} · {duration} day(s)</div>
+            <div className="font-display text-3xl font-bold">₹{subtotal.toFixed(0)}<span className="text-sm font-normal text-muted-foreground"> + GST at checkout</span></div>
+          </div>
+          <Button size="lg" onClick={continueToCheckout} disabled={filled === 0}>
+            Continue to checkout <ArrowRight className="h-4 w-4 ml-1" />
+          </Button>
+        </Card>
       </main>
       <Footer />
     </div>
+  );
+}
+
+function MealPicker({ items, currentId, slotHint, onPick }: {
+  items: any[]; currentId: string | null; slotHint: BowlSlot;
+  onPick: (id: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const [foodFilter, setFoodFilter] = useState<(typeof FOOD_FILTERS)[number]>("all");
+  const [minProtein, setMinProtein] = useState(0);
+  const [maxCals, setMaxCals] = useState(0);
+  const [onlySlot, setOnlySlot] = useState(false);
+
+  const filtered = useMemo(() => {
+    return items.filter((it: any) => {
+      if (foodFilter !== "all" && it.food_type !== foodFilter) return false;
+      if (q && !it.name.toLowerCase().includes(q.toLowerCase())) return false;
+      if (minProtein > 0 && Number(it.protein_g ?? 0) < minProtein) return false;
+      if (maxCals > 0 && Number(it.calories ?? 0) > maxCals) return false;
+      if (onlySlot && it.meal_type && it.meal_type !== slotHint) return false;
+      return true;
+    });
+  }, [items, foodFilter, q, minProtein, maxCals, onlySlot, slotHint]);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant={currentId ? "outline" : "default"}>{currentId ? "Change" : "Pick"}</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Pick a meal · <span className="capitalize text-muted-foreground">{slotHint}</span></DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="relative flex-1 min-w-[180px]">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search meals…" className="pl-7" />
+            </div>
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            {FOOD_FILTERS.map((f) => (
+              <button key={f} onClick={() => setFoodFilter(f)}
+                className={`rounded-full px-2.5 py-1 text-xs capitalize border ${foodFilter === f ? "bg-primary text-primary-foreground border-primary" : "bg-secondary"}`}>
+                {f}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-3 items-end text-xs">
+            <div>
+              <Label className="text-xs">Min protein (g)</Label>
+              <Input type="number" min={0} value={minProtein || ""} onChange={(e) => setMinProtein(+e.target.value || 0)} className="h-8 w-24" />
+            </div>
+            <div>
+              <Label className="text-xs">Max calories</Label>
+              <Input type="number" min={0} value={maxCals || ""} onChange={(e) => setMaxCals(+e.target.value || 0)} className="h-8 w-24" />
+            </div>
+            <label className="inline-flex items-center gap-1.5 ml-auto">
+              <input type="checkbox" checked={onlySlot} onChange={(e) => setOnlySlot(e.target.checked)} />
+              Only <span className="capitalize">{slotHint}</span> meals
+            </label>
+            {currentId && (
+              <Button size="sm" variant="ghost" onClick={() => { onPick(null); setOpen(false); }}>Clear</Button>
+            )}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {filtered.length === 0 && <p className="col-span-2 text-sm text-muted-foreground p-4 text-center">No meals match.</p>}
+            {filtered.map((it: any) => (
+              <button key={it.id} onClick={() => { onPick(it.id); setOpen(false); }}
+                className={`text-left rounded-lg border overflow-hidden hover:border-primary hover:shadow-sm transition flex
+                  ${currentId === it.id ? "border-primary ring-1 ring-primary" : ""}`}>
+                <MealImage path={it.image_url} alt={it.name} className="h-24 w-24 object-cover shrink-0" />
+                <div className="p-2.5 flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className={it.food_type === "veg" || it.food_type === "jain" ? "veg-dot" : "nonveg-dot"} />
+                    <span className="font-medium text-sm truncate">{it.name}</span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground line-clamp-2">{it.description}</div>
+                  <div className="text-[11px] text-muted-foreground mt-1">{it.calories} kcal · P {it.protein_g}g · {it.meal_type ?? "any"}</div>
+                  <div className="mt-1 flex items-center justify-between">
+                    <Badge variant="outline" className="text-[10px]">₹{Number(it.price_inr).toFixed(0)}</Badge>
+                    {it.serving_size && <span className="text-[10px] text-muted-foreground">{it.serving_size}</span>}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

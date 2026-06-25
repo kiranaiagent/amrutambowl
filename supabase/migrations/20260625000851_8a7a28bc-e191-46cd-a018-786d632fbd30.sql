@@ -1,0 +1,1 @@
+ALTER TABLE public.subscriptions ALTER COLUMN plan_id DROP NOT NULL;

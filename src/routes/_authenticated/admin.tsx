@@ -1,7 +1,10 @@
 import { createFileRoute, Outlet, Link, useRouterState } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { ChefHat, UtensilsCrossed, MapPin, ClipboardList, LogOut, ShieldCheck, Settings, Users, CalendarDays } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ChefHat, UtensilsCrossed, MapPin, ClipboardList, LogOut, ShieldCheck, Settings, Users, CalendarDays, Megaphone } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
@@ -12,6 +15,7 @@ const NAV = [
   { to: "/admin/menu", label: "Menu Items", icon: UtensilsCrossed },
   { to: "/admin/plans", label: "Plans", icon: ChefHat },
   { to: "/admin/pincodes", label: "Pincodes", icon: MapPin },
+  { to: "/admin/pincode-requests", label: "Expansion", icon: Megaphone },
   { to: "/admin/orders", label: "Orders", icon: ClipboardList },
   { to: "/admin/subscriptions", label: "Subscriptions", icon: CalendarDays },
   { to: "/admin/users", label: "Users", icon: Users },
@@ -21,6 +25,32 @@ const NAV = [
 function AdminLayout() {
   const { isAdmin, signOut, user, loading } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const pendingOrdersQ = useQuery({
+    queryKey: ["admin-pending-orders-count"],
+    enabled: isAdmin,
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      const { count, error } = await supabase.from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "preparing")
+        .is("accepted_at" as any, null);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const newRequestsQ = useQuery({
+    queryKey: ["admin-pincode-requests-count"],
+    enabled: isAdmin,
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const { count, error } = await supabase.from("pincode_requests" as any)
+        .select("id", { count: "exact", head: true }).eq("status", "new");
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
 
   if (loading) {
     return <div className="mx-auto max-w-md px-4 py-16 text-center text-muted-foreground">Loading…</div>;
@@ -41,6 +71,11 @@ function AdminLayout() {
     );
   }
 
+  const badgeFor = (to: string) => {
+    if (to === "/admin/orders" && pendingOrdersQ.data) return pendingOrdersQ.data;
+    if (to === "/admin/pincode-requests" && newRequestsQ.data) return newRequestsQ.data;
+    return null;
+  };
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
@@ -52,6 +87,7 @@ function AdminLayout() {
         <nav className="flex md:flex-col gap-1 px-2 overflow-x-auto md:overflow-visible pb-3">
           {NAV.map((n) => {
             const active = n.exact ? pathname === n.to : pathname.startsWith(n.to);
+            const badge = badgeFor(n.to);
             return (
               <Link
                 key={n.to}
@@ -60,7 +96,10 @@ function AdminLayout() {
                   active ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
                 }`}
               >
-                <n.icon className="h-4 w-4" /> {n.label}
+                <n.icon className="h-4 w-4" /> <span className="flex-1">{n.label}</span>
+                {badge ? (
+                  <Badge className={`text-[10px] h-5 px-1.5 ${active ? "bg-primary-foreground text-primary" : "bg-amber-500 text-white"}`}>{badge}</Badge>
+                ) : null}
               </Link>
             );
           })}
