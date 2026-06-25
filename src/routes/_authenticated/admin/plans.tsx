@@ -306,9 +306,13 @@ function PlanMenuBuilder({ plan, onClose }: { plan: Plan; onClose: () => void })
   const items = useQuery({
     queryKey: ["menu_items_all"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("menu_items").select("id,name,food_type,meal_type").order("name");
+      const { data, error } = await supabase
+        .from("menu_items")
+        .select("id,name,food_type,meal_type,is_available,status")
+        .eq("status", "active")
+        .order("name");
       if (error) throw error;
-      return data as { id: string; name: string; food_type: string; meal_type: string }[];
+      return data as { id: string; name: string; food_type: string; meal_type: string | null; is_available: boolean; status: string }[];
     },
   });
   const planItems = useQuery({
