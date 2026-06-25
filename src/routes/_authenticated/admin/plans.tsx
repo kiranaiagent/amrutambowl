@@ -306,9 +306,13 @@ function PlanMenuBuilder({ plan, onClose }: { plan: Plan; onClose: () => void })
   const items = useQuery({
     queryKey: ["menu_items_all"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("menu_items").select("id,name,food_type,meal_type").order("name");
+      const { data, error } = await supabase
+        .from("menu_items")
+        .select("id,name,food_type,meal_type,is_available,status")
+        .eq("status", "active")
+        .order("name");
       if (error) throw error;
-      return data as { id: string; name: string; food_type: string; meal_type: string }[];
+      return data as { id: string; name: string; food_type: string; meal_type: string | null; is_available: boolean; status: string }[];
     },
   });
   const planItems = useQuery({
@@ -403,11 +407,29 @@ function PlanMenuBuilder({ plan, onClose }: { plan: Plan; onClose: () => void })
                           <SelectTrigger className="h-9"><SelectValue placeholder="—" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="__none">— Clear —</SelectItem>
-                            {items.data?.filter((m) => m.meal_type === s || s === "snack").map((m) => (
-                              <SelectItem key={m.id} value={m.id}>
-                                {m.food_type === "veg" || m.food_type === "jain" ? "🟢 " : "🔴 "}{m.name}
-                              </SelectItem>
-                            ))}
+                            {(() => {
+                              const all = items.data ?? [];
+                              const matches = all.filter((m) => m.meal_type === s);
+                              const others = all.filter((m) => m.meal_type !== s);
+                              return (
+                                <>
+                                  {matches.map((m) => (
+                                    <SelectItem key={m.id} value={m.id}>
+                                      {m.food_type === "veg" || m.food_type === "jain" ? "🟢 " : "🔴 "}{m.name}
+                                    </SelectItem>
+                                  ))}
+                                  {others.length > 0 && matches.length > 0 && (
+                                    <div className="px-2 py-1 text-[10px] uppercase text-muted-foreground">Other meal types</div>
+                                  )}
+                                  {others.map((m) => (
+                                    <SelectItem key={m.id} value={m.id}>
+                                      {m.food_type === "veg" || m.food_type === "jain" ? "🟢 " : "🔴 "}{m.name}
+                                      <span className="text-muted-foreground"> · {m.meal_type ?? "any"}</span>
+                                    </SelectItem>
+                                  ))}
+                                </>
+                              );
+                            })()}
                           </SelectContent>
                         </Select>
                       </td>
