@@ -36,11 +36,18 @@ function OrdersPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*, order_items(*), profiles!orders_user_id_fkey(name, phone, email)")
+        .select("*, order_items(*)")
         .order("delivery_date", { ascending: true })
         .limit(500);
       if (error) throw error;
-      return data as any[];
+      const rows = (data ?? []) as any[];
+      const ids = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean)));
+      if (ids.length) {
+        const { data: profs } = await supabase.from("profiles").select("id,name,phone,email").in("id", ids);
+        const map = new Map((profs ?? []).map((p: any) => [p.id, p]));
+        rows.forEach((r) => { r.profiles = map.get(r.user_id) ?? null; });
+      }
+      return rows;
     },
   });
 
