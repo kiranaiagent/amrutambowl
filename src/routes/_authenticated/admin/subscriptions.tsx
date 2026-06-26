@@ -16,6 +16,13 @@ function formatMoney(value: unknown) {
 
 
 function SubscriptionsPage() {
+  const [openOrders, setOpenOrders] = useState<Set<string>>(new Set());
+  const toggleOrders = (id: string) => setOpenOrders((cur) => {
+    const next = new Set(cur);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
   const dataQ = useQuery({
     queryKey: ["admin-subscriptions-details"],
     queryFn: async () => {
