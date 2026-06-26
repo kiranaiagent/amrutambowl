@@ -33,6 +33,10 @@ function PlanDetail() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"standard" | "custom">("standard");
   const [overrides, setOverrides] = useState<Record<string, string | null>>({});
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10);
+  });
+
 
   const planQ = useQuery({
     queryKey: ["plan", id],
