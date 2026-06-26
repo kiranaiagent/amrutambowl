@@ -84,15 +84,28 @@ function PlansPage() {
   });
 
   const itemCounts = useQuery({
-    queryKey: ["plan_item_counts"],
+    queryKey: ["plan_item_counts_with_items"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("plan_items").select("plan_id");
+      const { data, error } = await supabase
+        .from("plan_items")
+        .select("plan_id, menu_items(id,name,image_url,food_type)");
       if (error) throw error;
-      const c: Record<string, number> = {};
-      (data ?? []).forEach((r: any) => { c[r.plan_id] = (c[r.plan_id] ?? 0) + 1; });
-      return c;
+      const counts: Record<string, number> = {};
+      const itemsByPlan: Record<string, any[]> = {};
+      (data ?? []).forEach((r: any) => {
+        counts[r.plan_id] = (counts[r.plan_id] ?? 0) + 1;
+        if (r.menu_items) {
+          (itemsByPlan[r.plan_id] = itemsByPlan[r.plan_id] ?? []).push(r.menu_items);
+        }
+      });
+      // unique items per plan
+      Object.keys(itemsByPlan).forEach((pid) => {
+        itemsByPlan[pid] = Array.from(new Map(itemsByPlan[pid].map((m) => [m.id, m])).values());
+      });
+      return { counts, itemsByPlan };
     },
   });
+
 
   const save = useMutation({
     mutationFn: async (p: Partial<Plan>) => {
