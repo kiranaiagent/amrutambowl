@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Phone, MapPin, UtensilsCrossed } from "lucide-react";
+import { CalendarDays, Phone, MapPin, UtensilsCrossed, ChevronDown, ChevronRight } from "lucide-react";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/admin/subscriptions")({
   component: SubscriptionsPage,
@@ -12,6 +13,7 @@ export const Route = createFileRoute("/_authenticated/admin/subscriptions")({
 function formatMoney(value: unknown) {
   return `₹${Number(value ?? 0).toFixed(0)}`;
 }
+
 
 function SubscriptionsPage() {
   const dataQ = useQuery({
