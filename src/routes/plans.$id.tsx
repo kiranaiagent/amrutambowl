@@ -108,16 +108,18 @@ function PlanDetail() {
     } else {
       try { sessionStorage.removeItem(OVERRIDE_KEY); } catch {}
     }
+    try { sessionStorage.setItem("amrutam.plan.start", JSON.stringify({ planId: id, startDate })); } catch {}
     if (!user) {
       toast.info("Sign in to continue to subscribe");
       navigate({ to: "/auth", search: { redirect: `/checkout?plan=${id}` } as any });
       return;
     }
-    navigate({ to: "/checkout", search: { plan: id } as any });
+    navigate({ to: "/checkout", search: { plan: id, start: startDate } as any });
   };
 
   const p = planQ.data;
   const customCount = Object.keys(overrides).length;
+
 
   return (
     <div className="min-h-screen flex flex-col">
