@@ -97,6 +97,17 @@ function Checkout() {
     } catch {}
   }, [planId]);
 
+  // Pick up start date hint from plan detail page
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("amrutam.plan.start");
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed?.planId === planId && parsed.startDate) setStartDate(parsed.startDate);
+    } catch {}
+  }, [planId]);
+
+
   const planQ = useQuery({
     queryKey: ["plan", planId],
     enabled: !!planId,
