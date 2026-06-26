@@ -90,11 +90,14 @@ function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-secondary/40 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-secondary/40 px-4 py-10">
       <Card className="w-full max-w-md p-8">
+        <Link to="/" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-4">
+          ← Back to home
+        </Link>
         <Link to="/" className="flex items-center gap-2">
           <img src={bowlAsset.url} alt="" className="h-9 w-9 rounded-full object-cover" />
-          <span className="font-display text-2xl font-bold text-primary">Amrutam</span>
+          <span className="font-display text-2xl font-bold text-primary">Amrutam Bowl</span>
         </Link>
         <h1 className="mt-5 font-display text-2xl font-bold">
           {step === "phone" ? "Sign in with phone" : "Enter the OTP"}
