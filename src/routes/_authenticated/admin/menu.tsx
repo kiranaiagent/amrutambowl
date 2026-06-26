@@ -247,53 +247,42 @@ function MenuPage() {
         </Dialog>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-6 grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {items.isLoading && <p className="text-muted-foreground">Loading…</p>}
         {items.data?.length === 0 && <p className="text-muted-foreground">No menu items yet. Create your first one above.</p>}
         {items.data?.filter((it) => filter === "all" || it.status === filter).map((it) => (
           <Card key={it.id} className={`overflow-hidden flex flex-col ${it.status === "archived" ? "opacity-60" : ""}`}>
-            <MealImage path={it.image_url} alt={it.name} className="h-44 w-full object-cover" />
-            <div className="p-4 flex-1 flex flex-col">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className={it.food_type === "veg" || it.food_type === "jain" ? "veg-dot" : "nonveg-dot"} aria-hidden />
-                    <h3 className="font-semibold">{it.name}</h3>
-                  </div>
-                  <div className="text-xs text-muted-foreground capitalize">
-                    {it.meal_type}{it.serving_size ? ` · ${it.serving_size}` : ""}
-                  </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                    <StatusBadge status={it.status} />
-                    {!it.is_available && <Badge variant="destructive" className="text-[10px]">Sold out</Badge>}
-                    {!it.is_available && <Badge variant="destructive" className="text-[10px]">Sold out</Badge>}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-bold">₹{Number(it.price_inr).toFixed(0)}</div>
-                </div>
+            <div className="relative">
+              <MealImage path={it.image_url} alt={it.name} className="h-28 w-full object-cover" />
+              <div className="absolute top-1 left-1 flex flex-col gap-1">
+                <StatusBadge status={it.status} />
+                {!it.is_available && <Badge variant="destructive" className="text-[9px] px-1 py-0">Sold out</Badge>}
               </div>
-              <div className="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
-                <div><div className="font-semibold">{it.calories}</div><div className="text-muted-foreground">kcal</div></div>
-                <div><div className="font-semibold" style={{ color: "var(--color-protein)" }}>{it.protein_g}g</div><div className="text-muted-foreground">protein</div></div>
-                <div><div className="font-semibold" style={{ color: "var(--color-carbs)" }}>{it.carbs_g}g</div><div className="text-muted-foreground">carbs</div></div>
-                <div><div className="font-semibold" style={{ color: "var(--color-fat)" }}>{it.fat_g}g</div><div className="text-muted-foreground">fat</div></div>
+              <div className="absolute top-1 right-1 bg-background/90 backdrop-blur rounded px-1.5 py-0.5 text-xs font-bold">
+                ₹{Number(it.price_inr).toFixed(0)}
               </div>
-              {it.tags && it.tags.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {it.tags.map((t) => <Badge key={t} variant="outline" className="text-xs">{t}</Badge>)}
-                </div>
-              )}
-              <div className="mt-4 flex flex-wrap gap-2 pt-3 border-t items-center">
-                <label className="flex items-center gap-2 text-xs">
-                  <Switch checked={it.is_available} onCheckedChange={(v) => toggleAvailable.mutate({ id: it.id, is_available: v })} />
-                  Available
-                </label>
-                <Button size="sm" variant="ghost" onClick={() => { setEditing(it); setOpen(true); }}><Pencil className="h-4 w-4 mr-1" />Edit</Button>
-                <Button size="sm" variant="ghost" onClick={() => duplicate.mutate(it.id)} disabled={duplicate.isPending}><Copy className="h-4 w-4 mr-1" />Copy</Button>
+            </div>
+            <div className="p-2.5 flex-1 flex flex-col gap-1.5">
+              <div className="flex items-start gap-1.5">
+                <span className={`mt-1 shrink-0 ${it.food_type === "veg" || it.food_type === "jain" ? "veg-dot" : "nonveg-dot"}`} aria-hidden />
+                <h3 className="font-semibold text-sm leading-tight line-clamp-2">{it.name}</h3>
+              </div>
+              <div className="text-[10px] text-muted-foreground capitalize">
+                {it.meal_type}{it.serving_size ? ` · ${it.serving_size}` : ""}
+              </div>
+              <div className="grid grid-cols-4 gap-1 text-center text-[10px] leading-tight">
+                <div><div className="font-semibold text-xs">{it.calories}</div><div className="text-muted-foreground">kcal</div></div>
+                <div><div className="font-semibold text-xs" style={{ color: "var(--color-protein)" }}>{it.protein_g}</div><div className="text-muted-foreground">P</div></div>
+                <div><div className="font-semibold text-xs" style={{ color: "var(--color-carbs)" }}>{it.carbs_g}</div><div className="text-muted-foreground">C</div></div>
+                <div><div className="font-semibold text-xs" style={{ color: "var(--color-fat)" }}>{it.fat_g}</div><div className="text-muted-foreground">F</div></div>
+              </div>
+              <div className="mt-auto flex flex-wrap items-center gap-0.5 pt-1.5 border-t">
+                <Switch className="scale-75 -ml-1" checked={it.is_available} onCheckedChange={(v) => toggleAvailable.mutate({ id: it.id, is_available: v })} />
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setEditing(it); setOpen(true); }} title="Edit"><Pencil className="h-3.5 w-3.5" /></Button>
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => duplicate.mutate(it.id)} disabled={duplicate.isPending} title="Copy"><Copy className="h-3.5 w-3.5" /></Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive hover:text-destructive" title="Delete"><Trash2 className="h-3.5 w-3.5" /></Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
@@ -314,6 +303,7 @@ function MenuPage() {
           </Card>
         ))}
       </div>
+
     </div>
   );
 }
