@@ -32,17 +32,19 @@ function Home() {
     },
   });
   const plans = useQuery({
-    queryKey: ["home-plans"],
+    queryKey: ["home-plans-with-items"],
     queryFn: async () => {
       const { data } = await supabase
         .from("plans")
-        .select("*")
+        .select("*, plan_items(menu_items(id,name,image_url,food_type,calories,protein_g))")
         .eq("status", "active")
+        .order("is_popular" as any, { ascending: false })
         .order("price_inr", { ascending: true })
         .limit(4);
       return data ?? [];
     },
   });
+
 
   return (
     <div className="min-h-screen">
