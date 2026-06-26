@@ -74,24 +74,52 @@ function Home() {
             <Link to="/plans" className="text-sm text-primary font-medium inline-flex items-center gap-1">See all <ArrowRight className="h-3.5 w-3.5" /></Link>
           </div>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {plans.data?.map((p: any) => (
-              <Link key={p.id} to="/plans/$id" params={{ id: p.id }} className="group">
-                <Card className="overflow-hidden hover:shadow-lg transition h-full flex flex-col">
-                  <MealImage path={p.image_url} alt={p.name} className="h-36 w-full object-cover" />
-                  <div className="p-4 flex-1 flex flex-col">
-                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{String(p.goal_type).replace("-", " ")}</div>
-                    <div className="font-semibold mt-0.5">{p.name}</div>
-                    <div className="mt-auto pt-3 flex items-center justify-between">
-                      <div className="font-bold text-lg">₹{Number(p.price_inr).toFixed(0)}
-                        <span className="text-xs font-normal text-muted-foreground">/{p.billing_cycle === "weekly" ? "wk" : "mo"}</span>
+            {plans.data?.map((p: any) => {
+              const items = Array.from(new Map(((p.plan_items ?? [])
+                .map((pi: any) => pi.menu_items).filter((m: any) => m))
+                .map((m: any) => [m.id, m])).values()) as any[];
+              return (
+                <Link key={p.id} to="/plans/$id" params={{ id: p.id }} className="group">
+                  <Card className="overflow-hidden hover:shadow-lg transition h-full flex flex-col">
+                    <MealImage path={p.image_url} alt={p.name} className="h-28 w-full object-cover" />
+                    <div className="p-3 flex-1 flex flex-col gap-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{String(p.goal_type).replace("-", " ")}</div>
+                        <div className="text-[10px] uppercase tracking-wide text-primary font-semibold">{p.billing_cycle}</div>
                       </div>
-                      <span className="text-xs font-medium text-primary group-hover:underline">Order →</span>
+                      <div className="font-semibold text-sm leading-tight">{p.name}</div>
+                      <div className="text-[11px] text-muted-foreground">{p.meals_per_day} meals/day · {p.days_per_week} d/wk</div>
+
+                      {items.length > 0 && (
+                        <div className="rounded-md bg-secondary/40 p-2 space-y-1">
+                          <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">What's inside · {items.length} dishes</div>
+                          <ul className="text-[11px] space-y-0.5">
+                            {items.slice(0, 3).map((m: any) => (
+                              <li key={m.id} className="flex items-center gap-1.5 truncate">
+                                <span className={m.food_type === "veg" || m.food_type === "jain" ? "veg-dot" : "nonveg-dot"} aria-hidden />
+                                <span className="truncate">{m.name}</span>
+                              </li>
+                            ))}
+                            {items.length > 3 && (
+                              <li className="text-muted-foreground text-[10px]">+ {items.length - 3} more</li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+
+                      <div className="mt-auto pt-2 flex items-center justify-between border-t">
+                        <div className="font-bold text-lg leading-none">₹{Number(p.price_inr).toFixed(0)}
+                          <span className="text-[10px] font-normal text-muted-foreground">/{p.billing_cycle === "weekly" ? "wk" : p.billing_cycle === "monthly" ? "mo" : p.billing_cycle.slice(0,3)}</span>
+                        </div>
+                        <span className="text-xs font-medium text-primary group-hover:underline">View →</span>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              </Link>
-            ))}
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
+
         </section>
       )}
 
