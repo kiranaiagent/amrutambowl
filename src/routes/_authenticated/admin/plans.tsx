@@ -92,11 +92,17 @@ function PlansPage() {
   const save = useMutation({
     mutationFn: async (p: Partial<Plan>) => {
       const payload: any = { ...p };
-      // Keep duration in sync with cycle if admin hasn't overridden
-      if (p.id) { const { error } = await supabase.from("plans").update(payload).eq("id", p.id); if (error) throw error; }
+      if (p.id) {
+        // If cycle changed, wipe stale plan_items (their day_of_week won't match the new cycle's grid)
+        const prev = plans.data?.find((x) => x.id === p.id);
+        if (prev && prev.billing_cycle !== p.billing_cycle) {
+          await supabase.from("plan_items").delete().eq("plan_id", p.id);
+        }
+        const { error } = await supabase.from("plans").update(payload).eq("id", p.id); if (error) throw error;
+      }
       else { delete payload.id; const { error } = await supabase.from("plans").insert(payload); if (error) throw error; }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["plans"] }); setOpen(false); toast.success("Saved"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["plans"] }); qc.invalidateQueries({ queryKey: ["plan_item_counts"] }); qc.invalidateQueries({ queryKey: ["plan_items"] }); setOpen(false); toast.success("Saved"); },
     onError: (e: any) => toast.error(e.message),
   });
 
