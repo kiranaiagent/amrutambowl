@@ -11,7 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
-import { ArrowRight, RotateCcw } from "lucide-react";
+import { ArrowRight, RotateCcw, Calendar as CalendarIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+
 
 export const Route = createFileRoute("/plans/$id")({
   component: PlanDetail,
@@ -31,6 +33,10 @@ function PlanDetail() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"standard" | "custom">("standard");
   const [overrides, setOverrides] = useState<Record<string, string | null>>({});
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10);
+  });
+
 
   const planQ = useQuery({
     queryKey: ["plan", id],
@@ -102,16 +108,18 @@ function PlanDetail() {
     } else {
       try { sessionStorage.removeItem(OVERRIDE_KEY); } catch {}
     }
+    try { sessionStorage.setItem("amrutam.plan.start", JSON.stringify({ planId: id, startDate })); } catch {}
     if (!user) {
       toast.info("Sign in to continue to subscribe");
       navigate({ to: "/auth", search: { redirect: `/checkout?plan=${id}` } as any });
       return;
     }
-    navigate({ to: "/checkout", search: { plan: id } as any });
+    navigate({ to: "/checkout", search: { plan: id, start: startDate } as any });
   };
 
   const p = planQ.data;
   const customCount = Object.keys(overrides).length;
+
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -120,62 +128,50 @@ function PlanDetail() {
         {!p ? <div className="text-muted-foreground">Loading…</div> : (
           <>
             <Link to="/plans" className="text-sm text-muted-foreground hover:text-foreground">← All plans</Link>
-            <div className="mt-3 grid gap-6 md:grid-cols-2">
-              <MealImage path={p.image_url} alt={p.name} className="aspect-[4/3] w-full rounded-2xl object-cover" />
-              <Card className="p-6">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge className="capitalize">{p.goal_type.replace("-", " ")}</Badge>
-                  <Badge variant="outline">{p.billing_cycle}</Badge>
-                </div>
-                <h1 className="mt-2 font-display text-3xl font-bold">{p.name}</h1>
-                <p className="mt-2 text-muted-foreground">{p.description}</p>
-                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-muted-foreground">Meals/day:</span> {p.meals_per_day}</div>
-                  <div><span className="text-muted-foreground">Days/week:</span> {p.days_per_week}</div>
-                </div>
-                <div className="mt-6 flex items-end justify-between">
-                  <div className="text-3xl font-bold">₹{Number(p.price_inr).toFixed(0)}<span className="text-sm font-normal text-muted-foreground">/{p.billing_cycle === "weekly" ? "week" : "month"}</span></div>
-                  <Button size="lg" onClick={subscribe}>
-                    Continue to subscribe <ArrowRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </div>
-              </Card>
-            </div>
 
-            {/* Menu gallery */}
-            {(itemsQ.data?.length ?? 0) > 0 && (() => {
-              const uniq = Array.from(new Map((itemsQ.data ?? [])
-                .map((r: any) => r.menu_items).filter((m: any) => m).map((m: any) => [m.id, m])).values()) as any[];
-              return (
-                <section className="mt-8">
-                  <h2 className="font-display text-2xl font-bold">What you'll be eating</h2>
-                  <p className="text-sm text-muted-foreground">A look at the dishes in this plan.</p>
-                  <div className="mt-4 grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-                    {uniq.map((m: any) => (
-                      <Card key={m.id} className="overflow-hidden">
-                        <MealImage path={m.image_url} alt={m.name} className="h-32 w-full object-cover" />
-                        <div className="p-2.5">
-                          <div className="flex items-center gap-1.5">
-                            <span className={m.food_type === "veg" || m.food_type === "jain" ? "veg-dot" : "nonveg-dot"} />
-                            <div className="text-sm font-medium truncate">{m.name}</div>
-                          </div>
-                          <div className="text-[11px] text-muted-foreground">{m.calories} kcal · {m.protein_g}g P</div>
-                        </div>
-                      </Card>
-                    ))}
+            {/* Compact hero card */}
+            <Card className="mt-3 overflow-hidden">
+              <div className="grid md:grid-cols-[260px_1fr]">
+                <MealImage path={p.image_url} alt={p.name} className="h-48 md:h-full w-full object-cover" />
+                <div className="p-4 md:p-5 flex flex-col gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge className="capitalize">{p.goal_type.replace("-", " ")}</Badge>
+                    <Badge variant="outline" className="capitalize">{p.billing_cycle}</Badge>
+                    <Badge variant="secondary" className="text-xs">{p.meals_per_day} meals/day</Badge>
+                    <Badge variant="secondary" className="text-xs">{p.days_per_week} days/week</Badge>
                   </div>
-                </section>
-              );
-            })()}
+                  <h1 className="font-display text-2xl md:text-3xl font-bold leading-tight">{p.name}</h1>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{p.description}</p>
 
-            {/* Mode toggle */}
-            <div className="mt-10 flex items-center justify-between flex-wrap gap-3">
+                  <div className="mt-1 flex items-end justify-between flex-wrap gap-3 pt-2 border-t">
+                    <div className="text-3xl font-bold leading-none">₹{Number(p.price_inr).toFixed(0)}
+                      <span className="text-xs font-normal text-muted-foreground"> /{p.billing_cycle}</span>
+                    </div>
+                    <div className="flex items-end gap-2 flex-wrap">
+                      <div>
+                        <label className="text-[11px] text-muted-foreground flex items-center gap-1 mb-1">
+                          <CalendarIcon className="h-3 w-3" /> Start date
+                        </label>
+                        <Input type="date" value={startDate} min={new Date().toISOString().slice(0,10)}
+                          onChange={(e) => setStartDate(e.target.value)} className="h-9 w-[150px]" />
+                      </div>
+                      <Button size="lg" onClick={subscribe}>
+                        Continue <ArrowRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Consolidated menu section with mode toggle */}
+            <div className="mt-6 flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h2 className="font-display text-2xl font-bold">This week's menu</h2>
-                <p className="text-sm text-muted-foreground">
+                <h2 className="font-display text-xl md:text-2xl font-bold">Menu in this plan</h2>
+                <p className="text-xs text-muted-foreground">
                   {mode === "standard"
-                    ? "Standard chef-curated menu. Switch to Customize to swap or skip any meal."
-                    : `Customizing — ${customCount} change${customCount === 1 ? "" : "s"}. Add-ons & allergen filters are picked at checkout.`}
+                    ? "Chef-curated schedule. Switch to Customize to swap or skip any meal."
+                    : `Customizing — ${customCount} change${customCount === 1 ? "" : "s"}.`}
                 </p>
               </div>
               <div className="inline-flex rounded-lg border p-1 bg-card">
@@ -194,6 +190,8 @@ function PlanDetail() {
                 )}
               </div>
             </div>
+
+
 
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[760px] text-sm">

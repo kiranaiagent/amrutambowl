@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Phone, MapPin, UtensilsCrossed } from "lucide-react";
+import { CalendarDays, Phone, MapPin, UtensilsCrossed, ChevronDown, ChevronRight } from "lucide-react";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/admin/subscriptions")({
   component: SubscriptionsPage,
@@ -13,7 +14,15 @@ function formatMoney(value: unknown) {
   return `₹${Number(value ?? 0).toFixed(0)}`;
 }
 
+
 function SubscriptionsPage() {
+  const [openOrders, setOpenOrders] = useState<Set<string>>(new Set());
+  const toggleOrders = (id: string) => setOpenOrders((cur) => {
+    const next = new Set(cur);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
   const dataQ = useQuery({
     queryKey: ["admin-subscriptions-details"],
     queryFn: async () => {
@@ -104,33 +113,58 @@ function SubscriptionsPage() {
                 </div>
               </div>
 
-              <div className="mt-4">
-                <div className="flex items-center gap-2 font-semibold"><UtensilsCrossed className="h-4 w-4" /> Orders ({orders.length})</div>
-                {orders.length === 0 ? (
-                  <p className="mt-2 text-sm text-muted-foreground">No linked orders yet.</p>
-                ) : (
-                  <div className="mt-2 grid gap-2 md:grid-cols-2">
-                    {orders.map((order: any) => (
-                      <div key={order.id} className="rounded-md border p-3 text-sm">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="font-medium">{order.delivery_date} · <span className="capitalize">{order.slot}</span></div>
-                          <Badge variant="outline" className="capitalize">{order.status?.replaceAll("_", " ")}</Badge>
-                        </div>
-                        <div className="mt-1 text-xs text-muted-foreground">{order.kind} · {formatMoney(order.total_inr)}</div>
-                        <ul className="mt-2 space-y-1 text-xs">
-                          {(order.order_items ?? []).map((item: any) => (
-                            <li key={item.id} className="flex justify-between gap-2">
-                              <span>{item.qty} × {item.name}</span>
-                              <span className="text-muted-foreground">{formatMoney(Number(item.price_inr) * Number(item.qty))}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
+              {/* Progress */}
+              {(() => {
+                const total = orders.length;
+                const delivered = orders.filter((o: any) => o.status === "delivered").length;
+                const pct = total ? Math.round((delivered / total) * 100) : 0;
+                return (
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-muted-foreground">Delivery progress</span>
+                      <span className="font-semibold">{delivered} of {total} delivered</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                      <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+                    </div>
                   </div>
+                );
+              })()}
+
+              <div className="mt-4">
+                <button onClick={() => toggleOrders(sub.id)}
+                  className="w-full flex items-center gap-2 font-semibold hover:bg-secondary/40 rounded p-1 -m-1 text-left">
+                  {openOrders.has(sub.id) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  <UtensilsCrossed className="h-4 w-4" /> Orders ({orders.length})
+                </button>
+                {openOrders.has(sub.id) && (
+                  orders.length === 0 ? (
+                    <p className="mt-2 text-sm text-muted-foreground">No linked orders yet.</p>
+                  ) : (
+                    <div className="mt-2 grid gap-2 md:grid-cols-2">
+                      {orders.map((order: any) => (
+                        <div key={order.id} className="rounded-md border p-3 text-sm">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="font-medium">{order.delivery_date} · <span className="capitalize">{order.slot}</span></div>
+                            <Badge variant="outline" className="capitalize">{order.status?.replaceAll("_", " ")}</Badge>
+                          </div>
+                          <div className="mt-1 text-xs text-muted-foreground">{order.kind} · {formatMoney(order.total_inr)}</div>
+                          <ul className="mt-2 space-y-1 text-xs">
+                            {(order.order_items ?? []).map((item: any) => (
+                              <li key={item.id} className="flex justify-between gap-2">
+                                <span>{item.qty} × {item.name}</span>
+                                <span className="text-muted-foreground">{formatMoney(Number(item.price_inr) * Number(item.qty))}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  )
                 )}
               </div>
             </Card>
+
           );
         })}
       </div>

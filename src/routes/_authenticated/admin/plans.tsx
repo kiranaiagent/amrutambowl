@@ -8,13 +8,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { uploadMealImage } from "@/lib/storage";
 import { MealImage } from "@/components/MealImage";
-import { Copy, Pencil, Plus, Settings2 } from "lucide-react";
+import { Copy, Pencil, Plus, Settings2, Trash2 } from "lucide-react";
 import { StatusBadge, StatusControl, StatusFilterTabs, type ContentStatus } from "@/components/admin/StatusControl";
+
 
 type Cycle = "daily" | "weekly" | "biweekly" | "monthly";
 
@@ -79,15 +84,28 @@ function PlansPage() {
   });
 
   const itemCounts = useQuery({
-    queryKey: ["plan_item_counts"],
+    queryKey: ["plan_item_counts_with_items"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("plan_items").select("plan_id");
+      const { data, error } = await supabase
+        .from("plan_items")
+        .select("plan_id, menu_items(id,name,image_url,food_type)");
       if (error) throw error;
-      const c: Record<string, number> = {};
-      (data ?? []).forEach((r: any) => { c[r.plan_id] = (c[r.plan_id] ?? 0) + 1; });
-      return c;
+      const counts: Record<string, number> = {};
+      const itemsByPlan: Record<string, any[]> = {};
+      (data ?? []).forEach((r: any) => {
+        counts[r.plan_id] = (counts[r.plan_id] ?? 0) + 1;
+        if (r.menu_items) {
+          (itemsByPlan[r.plan_id] = itemsByPlan[r.plan_id] ?? []).push(r.menu_items);
+        }
+      });
+      // unique items per plan
+      Object.keys(itemsByPlan).forEach((pid) => {
+        itemsByPlan[pid] = Array.from(new Map(itemsByPlan[pid].map((m) => [m.id, m])).values());
+      });
+      return { counts, itemsByPlan };
     },
   });
+
 
   const save = useMutation({
     mutationFn: async (p: Partial<Plan>) => {
@@ -102,7 +120,7 @@ function PlansPage() {
       }
       else { delete payload.id; const { error } = await supabase.from("plans").insert(payload); if (error) throw error; }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["plans"] }); qc.invalidateQueries({ queryKey: ["plan_item_counts"] }); qc.invalidateQueries({ queryKey: ["plan_items"] }); setOpen(false); toast.success("Saved"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["plans"] }); qc.invalidateQueries({ queryKey: ["plan_item_counts_with_items"] }); qc.invalidateQueries({ queryKey: ["plan_items"] }); setOpen(false); toast.success("Saved"); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -120,7 +138,16 @@ function PlansPage() {
       const { error } = await supabase.rpc("duplicate_plan", { _id: id });
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["plans"] }); qc.invalidateQueries({ queryKey: ["plan_item_counts"] }); toast.success("Plan duplicated — find the copy in Inactive"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["plans"] }); qc.invalidateQueries({ queryKey: ["plan_item_counts_with_items"] }); toast.success("Plan duplicated — find the copy in Inactive"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("plans").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["plans"] }); qc.invalidateQueries({ queryKey: ["plan_item_counts_with_items"] }); toast.success("Plan deleted"); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -129,6 +156,7 @@ function PlansPage() {
     try { const p = await uploadMealImage(f); setEditing((e) => ({ ...e, image_url: p })); toast.success("Image uploaded"); }
     catch (e: any) { toast.error(e.message); } finally { setUploading(false); }
   };
+
 
   const toggleDeliveryDay = (d: number) => {
     setEditing((e) => {
@@ -265,41 +293,88 @@ function PlansPage() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {plans.data?.length === 0 && <p className="text-muted-foreground">No plans yet.</p>}
         {plans.data?.filter((p) => filter === "all" || p.status === filter).map((p) => {
-          const count = itemCounts.data?.[p.id] ?? 0;
+          const count = itemCounts.data?.counts[p.id] ?? 0;
+          const planItems = itemCounts.data?.itemsByPlan[p.id] ?? [];
           return (
             <Card key={p.id} className={`overflow-hidden flex flex-col ${p.status === "archived" ? "opacity-60" : ""}`}>
-              <MealImage path={p.image_url} alt={p.name} className="h-36 w-full object-cover" />
-              <div className="p-4 flex-1 flex flex-col">
-                <div className="flex items-start justify-between gap-2">
+              {/* Image with title overlay so name gets full width */}
+              <div className="relative">
+                <MealImage path={p.image_url} alt={p.name} className="h-40 w-full object-cover" />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3">
+                  <h3 className="font-display text-lg leading-tight text-white">{p.name}</h3>
+                  <div className="text-[11px] text-white/85 capitalize">{p.goal_type.replace("-", " ")} · {p.billing_cycle}</div>
+                </div>
+              </div>
+
+              <div className="p-3 flex-1 flex flex-col gap-2">
+                <p className="text-xs text-muted-foreground line-clamp-2">{p.description}</p>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <StatusBadge status={p.status} />
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${count === 0 ? "bg-destructive/10 text-destructive" : "bg-secondary text-muted-foreground"}`}>
+                    {count} item{count === 1 ? "" : "s"}
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                    {p.meals_per_day}/day · {p.duration_days}d
+                  </span>
+                </div>
+
+                {/* Menu thumbnails preview */}
+                {planItems.length > 0 && (
+                  <div className="flex items-center -space-x-2" title={planItems.map((m: any) => m.name).join(", ")}>
+                    {planItems.slice(0, 6).map((m: any) => (
+                      <MealImage key={m.id} path={m.image_url} alt={m.name}
+                        className="h-8 w-8 rounded-full border-2 border-background object-cover" />
+                    ))}
+                    {planItems.length > 6 && (
+                      <div className="h-8 w-8 rounded-full border-2 border-background bg-secondary grid place-items-center text-[10px] font-semibold">
+                        +{planItems.length - 6}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Price */}
+                <div className="flex items-end justify-between border-t pt-2 mt-1">
                   <div>
-                    <h3 className="font-semibold">{p.name}</h3>
-                    <div className="text-xs text-muted-foreground capitalize">{p.goal_type.replace("-", " ")} · {p.billing_cycle}</div>
-                    <div className="mt-1 flex gap-1.5 items-center">
-                      <StatusBadge status={p.status} />
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${count === 0 ? "bg-destructive/10 text-destructive" : "bg-secondary text-muted-foreground"}`}>
-                        {count} menu item{count === 1 ? "" : "s"}
-                      </span>
-                    </div>
+                    <div className="font-bold text-lg leading-none">₹{Number(p.price_inr).toFixed(0)}</div>
+                    <div className="text-[10px] text-muted-foreground">/ {p.billing_cycle}</div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-bold">₹{Number(p.price_inr).toFixed(0)}</div>
-                    <div className="text-xs text-muted-foreground">/ {p.billing_cycle}</div>
-                  </div>
+                  <StatusControl status={p.status} label="plan" onChange={(s) => setStatus.mutate({ id: p.id, status: s })} />
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{p.description}</p>
-                <div className="mt-3 text-xs text-muted-foreground">
-                  {p.meals_per_day} meals/day · {p.duration_days}d cycle{p.billing_cycle !== "daily" && p.delivery_days?.length ? ` · ${p.delivery_days.length} delivery day(s)` : ""}
-                </div>
-                <div className="mt-4 flex gap-2 pt-3 border-t flex-wrap items-center">
-                  <Button size="sm" variant="secondary" onClick={() => setBuilderFor(p)}><Settings2 className="h-4 w-4 mr-1" />Menu</Button>
-                  <Button size="sm" variant="ghost" onClick={() => { setEditing(p); setOpen(true); }}><Pencil className="h-4 w-4 mr-1" />Edit</Button>
-                  <Button size="sm" variant="ghost" onClick={() => duplicate.mutate(p.id)} disabled={duplicate.isPending}><Copy className="h-4 w-4 mr-1" />Copy</Button>
-                  <div className="ml-auto">
-                    <StatusControl status={p.status} label="plan" onChange={(s) => setStatus.mutate({ id: p.id, status: s })} />
-                  </div>
+
+                {/* Consolidated actions */}
+                <div className="grid grid-cols-4 gap-1 pt-1">
+                  <Button size="sm" variant="secondary" className="px-2" onClick={() => setBuilderFor(p)} title="Menu">
+                    <Settings2 className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button size="sm" variant="ghost" className="px-2" onClick={() => { setEditing(p); setOpen(true); }} title="Edit">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button size="sm" variant="ghost" className="px-2" onClick={() => duplicate.mutate(p.id)} disabled={duplicate.isPending} title="Copy">
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="sm" variant="ghost" className="px-2 text-destructive hover:text-destructive" title="Delete">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete "{p.name}"?</AlertDialogTitle>
+                        <AlertDialogDescription>This permanently removes the plan. Existing subscriptions and orders keep their snapshot.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => del.mutate(p.id)}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </Card>
+
           );
         })}
       </div>
