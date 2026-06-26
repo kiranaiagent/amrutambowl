@@ -122,6 +122,8 @@ function MyPage() {
               const next = subOrders.find((o: any) => o.delivery_date >= today && o.status !== "delivered" && o.status !== "skipped");
               const upcoming = subOrders.filter((o: any) => o.delivery_date >= today && o.status !== "delivered" && o.status !== "skipped").length;
               const completed = subOrders.filter((o: any) => o.status === "delivered").length;
+              const total = subOrders.length;
+              const pct = total ? Math.round((completed / total) * 100) : 0;
               const isOpen = expanded.has(s.id);
               return (
                 <Card key={s.id} className="overflow-hidden">
@@ -139,8 +141,13 @@ function MyPage() {
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5 flex flex-wrap gap-x-3">
                         <span>{s.meals_per_day}/day · {s.days_per_week} d/wk</span>
-                        <span>· {completed} delivered · {upcoming} upcoming</span>
+                        <span>· <strong className="text-foreground">{completed} of {total}</strong> delivered · {upcoming} upcoming</span>
                       </div>
+                      {total > 0 && (
+                        <div className="mt-1.5 h-1.5 rounded-full bg-secondary overflow-hidden max-w-md">
+                          <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+                        </div>
+                      )}
                     </div>
                     {next && (
                       <div className="hidden sm:block text-right">
@@ -149,6 +156,7 @@ function MyPage() {
                       </div>
                     )}
                   </button>
+
 
                   {/* Expanded body */}
                   {isOpen && (
