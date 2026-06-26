@@ -120,7 +120,7 @@ function PlansPage() {
       }
       else { delete payload.id; const { error } = await supabase.from("plans").insert(payload); if (error) throw error; }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["plans"] }); qc.invalidateQueries({ queryKey: ["plan_item_counts"] }); qc.invalidateQueries({ queryKey: ["plan_items"] }); setOpen(false); toast.success("Saved"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["plans"] }); qc.invalidateQueries({ queryKey: ["plan_item_counts_with_items"] }); qc.invalidateQueries({ queryKey: ["plan_items"] }); setOpen(false); toast.success("Saved"); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -138,7 +138,16 @@ function PlansPage() {
       const { error } = await supabase.rpc("duplicate_plan", { _id: id });
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["plans"] }); qc.invalidateQueries({ queryKey: ["plan_item_counts"] }); toast.success("Plan duplicated — find the copy in Inactive"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["plans"] }); qc.invalidateQueries({ queryKey: ["plan_item_counts_with_items"] }); toast.success("Plan duplicated — find the copy in Inactive"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("plans").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["plans"] }); qc.invalidateQueries({ queryKey: ["plan_item_counts_with_items"] }); toast.success("Plan deleted"); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -147,6 +156,7 @@ function PlansPage() {
     try { const p = await uploadMealImage(f); setEditing((e) => ({ ...e, image_url: p })); toast.success("Image uploaded"); }
     catch (e: any) { toast.error(e.message); } finally { setUploading(false); }
   };
+
 
   const toggleDeliveryDay = (d: number) => {
     setEditing((e) => {
