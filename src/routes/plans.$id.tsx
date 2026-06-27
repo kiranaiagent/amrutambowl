@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
-import { ArrowRight, RotateCcw, Calendar as CalendarIcon } from "lucide-react";
+import { ArrowRight, RotateCcw, Calendar as CalendarIcon, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 
