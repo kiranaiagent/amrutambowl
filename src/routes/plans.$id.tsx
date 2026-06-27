@@ -188,7 +188,45 @@ function PlanDetail() {
               </div>
             </Card>
 
+            {/* Build-a-Bowl from this plan CTA */}
+            <div className="mt-4 flex items-center justify-between flex-wrap gap-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
+              <div className="text-sm">
+                <div className="font-semibold">Want to tweak this plan?</div>
+                <div className="text-xs text-muted-foreground">Start from this plan's menu and customize every meal in the Build-a-Bowl wizard.</div>
+              </div>
+              <Button variant="outline" onClick={buildBowlFromPlan} className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                <Sparkles className="h-4 w-4 mr-1.5" /> Build a Bowl using this plan
+              </Button>
+            </div>
+
+            {/* Gallery: meals inside this plan */}
+            {galleryItems.length > 0 && (
+              <section className="mt-6">
+                <h2 className="font-display text-xl md:text-2xl font-bold">What's on the plate</h2>
+                <p className="text-xs text-muted-foreground">A taste of every dish included in this plan.</p>
+                <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  {galleryItems.map((m: any) => (
+                    <Card key={m.id} className="overflow-hidden">
+                      <MealImage path={m.image_url} alt={m.name} className="aspect-square w-full object-cover" />
+                      <div className="p-2">
+                        <div className="flex items-start gap-1.5">
+                          <span className={`mt-1 shrink-0 ${m.food_type === "veg" || m.food_type === "jain" ? "veg-dot" : "nonveg-dot"}`} aria-hidden />
+                          <div className="min-w-0">
+                            <div className="font-semibold text-xs leading-tight line-clamp-2">{m.name}</div>
+                            <div className="text-[10px] text-muted-foreground capitalize mt-0.5">
+                              {m.meal_type}{m.calories ? ` · ${m.calories} kcal` : ""}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Consolidated menu section with mode toggle */}
+
             <div className="mt-6 flex items-center justify-between flex-wrap gap-3">
               <div>
                 <h2 className="font-display text-xl md:text-2xl font-bold">Menu in this plan</h2>
