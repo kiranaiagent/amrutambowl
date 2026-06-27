@@ -117,8 +117,32 @@ function PlanDetail() {
     navigate({ to: "/checkout", search: { plan: id, start: startDate } as any });
   };
 
+  const buildBowlFromPlan = () => {
+    try {
+      sessionStorage.setItem("amrutam.bowl.seedFromPlan", JSON.stringify({
+        planId: id,
+        billing_cycle: p?.billing_cycle,
+        meals_per_day: p?.meals_per_day,
+        days_per_week: p?.days_per_week,
+        items: (itemsQ.data ?? []).map((r) => ({
+          day_of_week: r.day_of_week, slot: r.slot, menu_item_id: r.menu_items?.id ?? null,
+        })),
+      }));
+    } catch {}
+    navigate({ to: "/bowl" });
+  };
+
   const p = planQ.data;
   const customCount = Object.keys(overrides).length;
+
+  // Unique menu items used in this plan, for the gallery grid.
+  const galleryItems = useMemo(() => {
+    const m = new Map<string, any>();
+    (itemsQ.data ?? []).forEach((r) => { if (r.menu_items?.id) m.set(r.menu_items.id, r.menu_items); });
+    return Array.from(m.values());
+  }, [itemsQ.data]);
+
+
 
 
   return (
