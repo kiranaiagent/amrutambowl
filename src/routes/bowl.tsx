@@ -114,6 +114,23 @@ function BowlPage() {
     });
   }, [deliveries.length]);
 
+  // Seed config from a plan when arriving via "Build a Bowl using this plan".
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("amrutam.bowl.seedFromPlan");
+      if (!raw) return;
+      sessionStorage.removeItem("amrutam.bowl.seedFromPlan");
+      const seed = JSON.parse(raw);
+      if (seed?.billing_cycle && ["daily", "weekly", "biweekly", "monthly"].includes(seed.billing_cycle)) {
+        setCycle(seed.billing_cycle);
+        setDuration(CYCLE_DEFAULT_DURATION[seed.billing_cycle as BowlCycle]);
+      }
+      if (typeof seed?.meals_per_day === "number") setMealsPerDay(Math.max(1, Math.min(3, seed.meals_per_day)));
+      toast.success("Pre-filled from plan — tweak any meal below.");
+    } catch {}
+  }, []);
+
+
   const menuById = useMemo(() => {
     const m = new Map<string, any>();
     (menuQ.data ?? []).forEach((it) => m.set(it.id, it));
