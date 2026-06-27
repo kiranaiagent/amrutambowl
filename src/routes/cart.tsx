@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
-import { Trash2 } from "lucide-react";
+import { Trash2, ChefHat } from "lucide-react";
 
 export const Route = createFileRoute("/cart")({
   component: CartPage,
@@ -26,7 +26,7 @@ function CartPage() {
         {lines.length === 0 ? (
           <Card className="mt-6 p-8 text-center">
             <p className="text-muted-foreground">Nothing in your bowl yet.</p>
-            <Link to="/bowl"><Button className="mt-4">Build a Bowl</Button></Link>
+            <Link to="/bowl"><Button className="mt-4"><ChefHat className="h-4 w-4 mr-1.5" /> Build My Own Bowl</Button></Link>
           </Card>
         ) : (
           <Card className="mt-6 p-5">

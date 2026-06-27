@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
-import { ArrowRight, RotateCcw, Calendar as CalendarIcon, Sparkles } from "lucide-react";
+import { RotateCcw, Calendar as CalendarIcon, ChefHat } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 
@@ -24,6 +24,10 @@ export const Route = createFileRoute("/plans/$id")({
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const SLOTS: Array<"breakfast" | "lunch" | "dinner"> = ["breakfast", "lunch", "dinner"];
 const OVERRIDE_KEY = "ruchi.plan.overrides.v1";
+const CYCLE_SUFFIX: Record<string, string> = {
+  daily: "day", weekly: "week", biweekly: "2 wks", monthly: "month", custom_dates: "plan",
+};
+const cycleSuffix = (c: string) => CYCLE_SUFFIX[c] ?? c;
 
 type Override = { day: number; slot: string; menu_item_id: string | null };
 
@@ -77,6 +81,16 @@ function PlanDetail() {
     });
     return g;
   }, [itemsQ.data]);
+
+  // Only render the days/slots this plan actually uses — no empty Lunch/Dinner columns.
+  const usedSlots = useMemo(
+    () => SLOTS.filter((s) => DAYS.some((_, i) => stdGrid[`${i + 1}-${s}`])),
+    [stdGrid],
+  );
+  const usedDays = useMemo(
+    () => DAYS.map((_, i) => i + 1).filter((dn) => usedSlots.some((s) => stdGrid[`${dn}-${s}`])),
+    [stdGrid, usedSlots],
+  );
 
   const getItem = (key: string) => {
     if (mode === "custom" && key in overrides) {
@@ -151,7 +165,7 @@ function PlanDetail() {
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
         {!p ? <div className="text-muted-foreground">Loading…</div> : (
           <>
-            <Link to="/plans" className="text-sm text-muted-foreground hover:text-foreground">← All plans</Link>
+            <Link to="/plans" className="text-sm text-muted-foreground hover:text-foreground">← All Plans</Link>
 
             {/* Compact hero card */}
             <Card className="mt-3 overflow-hidden">
@@ -161,15 +175,15 @@ function PlanDetail() {
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge className="capitalize">{p.goal_type.replace("-", " ")}</Badge>
                     <Badge variant="outline" className="capitalize">{p.billing_cycle}</Badge>
-                    <Badge variant="secondary" className="text-xs">{p.meals_per_day} meals/day</Badge>
-                    <Badge variant="secondary" className="text-xs">{p.days_per_week} days/week</Badge>
+                    <Badge variant="secondary" className="text-xs">{p.meals_per_day} meal{p.meals_per_day === 1 ? "" : "s"}/day</Badge>
+                    <Badge variant="secondary" className="text-xs">{p.days_per_week} day{p.days_per_week === 1 ? "" : "s"}/week</Badge>
                   </div>
                   <h1 className="font-display text-2xl md:text-3xl font-bold leading-tight">{p.name}</h1>
                   <p className="text-sm text-muted-foreground line-clamp-2">{p.description}</p>
 
                   <div className="mt-1 flex items-end justify-between flex-wrap gap-3 pt-2 border-t">
-                    <div className="text-3xl font-bold leading-none">₹{Number(p.price_inr).toFixed(0)}
-                      <span className="text-xs font-normal text-muted-foreground"> /{p.billing_cycle}</span>
+                    <div className="font-display text-3xl leading-none">₹{Number(p.price_inr).toFixed(0)}
+                      <span className="text-xs font-sans font-normal text-muted-foreground"> /{cycleSuffix(p.billing_cycle)}</span>
                     </div>
                     <div className="flex items-end gap-2 flex-wrap">
                       <div>
@@ -180,7 +194,7 @@ function PlanDetail() {
                           onChange={(e) => setStartDate(e.target.value)} className="h-9 w-[150px]" />
                       </div>
                       <Button size="lg" onClick={subscribe}>
-                        Continue <ArrowRight className="h-4 w-4 ml-1" />
+                        Continue
                       </Button>
                     </div>
                   </div>
@@ -192,17 +206,17 @@ function PlanDetail() {
             <div className="mt-4 flex items-center justify-between flex-wrap gap-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
               <div className="text-sm">
                 <div className="font-semibold">Want to tweak this plan?</div>
-                <div className="text-xs text-muted-foreground">Start from this plan's menu and customize every meal in the Build-a-Bowl wizard.</div>
+                <div className="text-xs text-muted-foreground">Start from this plan's menu and customise every meal.</div>
               </div>
               <Button variant="outline" onClick={buildBowlFromPlan} className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                <Sparkles className="h-4 w-4 mr-1.5" /> Build a Bowl using this plan
+                <ChefHat className="h-4 w-4 mr-1.5" /> Build My Own Bowl Using This Plan
               </Button>
             </div>
 
             {/* Gallery: meals inside this plan */}
             {galleryItems.length > 0 && (
               <section className="mt-6">
-                <h2 className="font-display text-xl md:text-2xl font-bold">What's on the plate</h2>
+                <h2 className="font-display text-xl md:text-2xl font-bold">What's on the Plate</h2>
                 <p className="text-xs text-muted-foreground">A taste of every dish included in this plan.</p>
                 <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                   {galleryItems.map((m: any) => (
@@ -229,11 +243,11 @@ function PlanDetail() {
 
             <div className="mt-6 flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h2 className="font-display text-xl md:text-2xl font-bold">Menu in this plan</h2>
+                <h2 className="font-display text-xl md:text-2xl font-bold">Menu in This Plan</h2>
                 <p className="text-xs text-muted-foreground">
                   {mode === "standard"
-                    ? "Chef-curated schedule. Switch to Customize to swap or skip any meal."
-                    : `Customizing — ${customCount} change${customCount === 1 ? "" : "s"}.`}
+                    ? "Chef-curated schedule. Switch to Customise to swap or skip any meal."
+                    : `Customising — ${customCount} change${customCount === 1 ? "" : "s"}.`}
                 </p>
               </div>
               <div className="inline-flex rounded-lg border p-1 bg-card">
@@ -244,7 +258,7 @@ function PlanDetail() {
                 <button
                   onClick={() => setMode("custom")}
                   className={`px-3 py-1.5 text-sm rounded-md ${mode === "custom" ? "bg-primary text-primary-foreground" : ""}`}
-                >Customize</button>
+                >Customise</button>
                 {mode === "custom" && customCount > 0 && (
                   <button onClick={() => setOverrides({})} className="ml-1 px-2 py-1.5 text-xs text-muted-foreground inline-flex items-center gap-1">
                     <RotateCcw className="h-3 w-3" /> Reset
@@ -255,47 +269,51 @@ function PlanDetail() {
 
 
 
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[760px] text-sm">
-                <thead>
-                  <tr className="text-left text-muted-foreground border-b">
-                    <th className="p-2 w-20">Day</th>
-                    {SLOTS.map((s) => <th key={s} className="p-2 capitalize">{s}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {DAYS.map((d, i) => (
-                    <tr key={d} className="border-b last:border-0 align-top">
-                      <td className="p-2 font-medium pt-3">{d}</td>
-                      {SLOTS.map((s) => {
-                        const key = `${i + 1}-${s}`;
+            {usedDays.length === 0 ? (
+              <Card className="mt-4 p-8 text-center text-muted-foreground">
+                The weekly menu for this plan is being finalised. Subscribe now — our chef curates each delivery.
+              </Card>
+            ) : (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {usedDays.map((dn) => (
+                  <Card key={dn} className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="font-display text-lg leading-none">{DAYS[dn - 1]}</div>
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Day {dn}</div>
+                    </div>
+                    <div className="mt-3 space-y-3">
+                      {usedSlots.map((s) => {
+                        const key = `${dn}-${s}`;
+                        const stdItem = stdGrid[key];
+                        if (!stdItem) return null; // this day has no meal in this slot
                         const it = getItem(key);
                         const isOverride = mode === "custom" && key in overrides;
-                        const stdItem = stdGrid[key];
+                        const macro = it && (it.calories > 0 || it.protein_g > 0)
+                          ? [it.calories > 0 ? `${it.calories} kcal` : null, it.protein_g > 0 ? `${it.protein_g}g protein` : null].filter(Boolean).join(" · ")
+                          : null;
                         return (
-                          <td key={s} className="p-2">
+                          <div key={s} className="rounded-xl border bg-secondary/20 p-2.5">
+                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1.5 capitalize">{s}</div>
                             {mode === "standard" ? (
                               it ? (
-                                <div className="flex items-center gap-2">
-                                  <MealImage path={it.image_url} alt={it.name} className="h-10 w-10 rounded-md object-cover" />
-                                  <div>
-                                    <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-2.5">
+                                  <MealImage path={it.image_url} alt={it.name} className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5">
                                       <span className={it.food_type === "veg" || it.food_type === "jain" ? "veg-dot" : "nonveg-dot"} aria-hidden />
-                                      <span className="font-medium">{it.name}</span>
+                                      <span className="font-medium text-sm leading-tight truncate">{it.name}</span>
                                     </div>
-                                    <div className="text-xs text-muted-foreground">{it.calories} kcal · {it.protein_g}g P</div>
+                                    {macro && <div className="text-[11px] text-muted-foreground mt-0.5">{macro}</div>}
                                   </div>
                                 </div>
-                              ) : <span className="text-muted-foreground">—</span>
+                              ) : <span className="text-sm text-muted-foreground">—</span>
                             ) : (
-                              <div className="space-y-1">
+                              <div className="space-y-1.5">
                                 <Select
                                   value={isOverride ? (overrides[key] ?? "__skip") : (stdItem?.id ?? "__skip")}
-                                  onValueChange={(v) => setCell(i + 1, s, v)}
+                                  onValueChange={(v) => setCell(dn, s, v)}
                                 >
-                                  <SelectTrigger className="h-9">
-                                    <SelectValue placeholder="—" />
-                                  </SelectTrigger>
+                                  <SelectTrigger className="h-9 bg-card"><SelectValue placeholder="—" /></SelectTrigger>
                                   <SelectContent>
                                     {stdItem && (
                                       <SelectItem value={stdItem.id}>
@@ -310,28 +328,27 @@ function PlanDetail() {
                                     ))}
                                   </SelectContent>
                                 </Select>
-                                {it && (
-                                  <div className="text-[11px] text-muted-foreground pl-1">
-                                    {it.calories} kcal · {it.protein_g}g P {isOverride && <span className="text-primary">· modified</span>}
+                                {it ? (
+                                  <div className="text-[11px] text-muted-foreground pl-0.5">
+                                    {macro ?? "Custom meal"}{isOverride && <span className="text-primary"> · modified</span>}
                                   </div>
-                                )}
-                                {!it && isOverride && (
-                                  <div className="text-[11px] text-primary pl-1">Skipped</div>
+                                ) : (
+                                  <div className="text-[11px] text-primary pl-0.5">Skipped</div>
                                 )}
                               </div>
                             )}
-                          </td>
+                          </div>
                         );
                       })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
 
             <div className="mt-6 flex justify-end">
               <Button size="lg" onClick={subscribe}>
-                Continue to subscribe <ArrowRight className="h-4 w-4 ml-1" />
+                Continue to Subscribe
               </Button>
             </div>
           </>

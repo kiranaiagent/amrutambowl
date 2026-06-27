@@ -410,7 +410,7 @@ function Checkout() {
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
         <h1 className="font-display text-3xl font-bold">Checkout</h1>
         <p className="text-muted-foreground">
-          {isBowl ? "Custom Build-a-Bowl subscription" : isPlan ? planQ.data?.name : "Build Your Bowl order"}
+          {isBowl ? "Custom Build My Own Bowl subscription" : isPlan ? planQ.data?.name : "Build My Own Bowl order"}
         </p>
 
         {isBowl && bowlConfig && (

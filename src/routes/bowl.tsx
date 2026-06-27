@@ -11,15 +11,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { ArrowRight, Filter, Search, Sparkles, Trash2 } from "lucide-react";
+import { Filter, Search, Sparkles, Trash2, ChevronDown, CalendarDays, ClipboardList, UtensilsCrossed } from "lucide-react";
 
 /** Build-a-Bowl: schedule + per-delivery menu picker. */
 export const Route = createFileRoute("/bowl")({
   head: () => ({
     meta: [
-      { title: "Build Your Bowl — Amrutam Bowl" },
+      { title: "Build My Own Bowl — Amrutam Bowl" },
       { name: "description", content: "Design your own subscription. Pick cycle, days, time and menu for each delivery." },
     ],
   }),
@@ -58,6 +58,8 @@ function BowlPage() {
   const [startDate, setStartDate] = useState(isoDate(tomorrow));
   const [preferredTime, setPreferredTime] = useState("12:30");
   const [primarySlot, setPrimarySlot] = useState<BowlSlot>("lunch");
+  // Which accordion step is expanded (0 = all collapsed)
+  const [openStep, setOpenStep] = useState(1);
 
   // ---- Menu picks: keyed `${date}|${slot}` -> menu_item_id ----
   const [picks, setPicks] = useState<Record<string, string | null>>({});
@@ -197,24 +199,22 @@ function BowlPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 md:py-10">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-5 md:py-8">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <h1 className="font-display text-3xl md:text-4xl font-bold">Build Your Bowl</h1>
-            <p className="text-muted-foreground">Pick a schedule, then choose what's on each plate. We deliver fresh, never frozen.</p>
+            <h1 className="font-display text-2xl md:text-3xl font-bold">Build My Own Bowl</h1>
+            <p className="text-sm text-muted-foreground">Customise your subscription in three easy steps.</p>
           </div>
-          <Link to="/plans" className="text-sm text-primary hover:underline">Or browse popular plans →</Link>
+          <Link to="/plans" className="text-sm font-medium text-primary hover:underline">Or browse popular plans</Link>
         </div>
 
         {/* Step 1 — Schedule */}
-        <Card className="mt-6 p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="rounded-full bg-primary/10 text-primary text-xs font-bold px-2 py-0.5">1</span>
-            <h2 className="font-semibold">Set your delivery schedule</h2>
-          </div>
-          <div className="grid gap-4 md:grid-cols-3">
+        <StepSection n={1} Icon={CalendarDays} title="Set Your Schedule"
+          summary={`${cycle[0].toUpperCase() + cycle.slice(1)} · ${duration} day(s) · ${deliveries.length} slots`}
+          open={openStep === 1} onToggle={() => setOpenStep((o) => (o === 1 ? 0 : 1))}>
+          <div className="grid gap-3 md:grid-cols-3">
             <div>
-              <Label>Plan cycle</Label>
+              <Label>Plan Cycle</Label>
               <div className="mt-1 flex flex-wrap gap-2">
                 {(["daily","weekly","biweekly","monthly"] as BowlCycle[]).map((c) => (
                   <button key={c} onClick={() => setCycleSafe(c)}
@@ -225,7 +225,7 @@ function BowlPage() {
               </div>
             </div>
             <div>
-              <Label>Meals / day</Label>
+              <Label>Meals / Day</Label>
               <Select value={String(mealsPerDay)} onValueChange={(v) => setMealsPerDay(+v)}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -234,7 +234,7 @@ function BowlPage() {
               </Select>
             </div>
             <div>
-              <Label>Primary delivery slot</Label>
+              <Label>Primary Delivery Slot</Label>
               <Select value={primarySlot} onValueChange={(v) => setPrimarySlot(v as BowlSlot)}>
                 <SelectTrigger className="mt-1 capitalize"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -243,23 +243,23 @@ function BowlPage() {
               </Select>
             </div>
             <div>
-              <Label>Duration (days)</Label>
+              <Label>Duration (Days)</Label>
               <Input type="number" min={1} max={90} value={duration} className="mt-1"
                 onChange={(e) => setDuration(Math.max(1, +e.target.value))} />
             </div>
             <div>
-              <Label>Start date</Label>
+              <Label>Start Date</Label>
               <Input type="date" value={startDate} min={isoDate(tomorrow)} className="mt-1"
                 onChange={(e) => setStartDate(e.target.value)} />
             </div>
             <div>
-              <Label>Preferred time</Label>
+              <Label>Preferred Time</Label>
               <Input type="time" value={preferredTime} className="mt-1"
                 onChange={(e) => setPreferredTime(e.target.value)} />
             </div>
             {cycle !== "daily" && (
               <div className="md:col-span-3">
-                <Label>Delivery days</Label>
+                <Label>Delivery Days</Label>
                 <div className="mt-1 flex flex-wrap gap-2">
                   {WEEKDAYS.map((d) => {
                     const on = deliveryDays.includes(d.v);
@@ -282,15 +282,15 @@ function BowlPage() {
             </div>
             <div className="text-muted-foreground text-xs">First delivery: {deliveries[0]?.date ?? "—"} · Last: {deliveries[deliveries.length - 1]?.date ?? "—"}</div>
           </div>
-        </Card>
+          <div className="mt-4 flex justify-end">
+            <Button onClick={() => setOpenStep(2)}>Next: Pick a Plan</Button>
+          </div>
+        </StepSection>
 
         {/* Step 2 — Start from popular OR start blank */}
-        <Card className="mt-5 p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="rounded-full bg-primary/10 text-primary text-xs font-bold px-2 py-0.5">2</span>
-            <h2 className="font-semibold">Start from a popular plan (optional)</h2>
-            <Sparkles className="h-4 w-4 text-primary" />
-          </div>
+        <StepSection n={2} Icon={ClipboardList} title="Pick a Plan"
+          summary="Optional — gives you a head-start"
+          open={openStep === 2} onToggle={() => setOpenStep((o) => (o === 2 ? 0 : 2))}>
           {popularPlansQ.data && popularPlansQ.data.length > 0 ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {popularPlansQ.data.map((p) => (
@@ -310,85 +310,104 @@ function BowlPage() {
           ) : (
             <p className="text-sm text-muted-foreground">No popular plans yet — start blank below.</p>
           )}
-        </Card>
+          <div className="mt-4 flex justify-end">
+            <Button onClick={() => setOpenStep(3)}>Next: Choose Meals</Button>
+          </div>
+        </StepSection>
 
         {/* Step 3 — Per-delivery menu picker */}
-        <Card className="mt-5 p-5">
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <span className="rounded-full bg-primary/10 text-primary text-xs font-bold px-2 py-0.5">3</span>
-            <h2 className="font-semibold">Choose what's on each plate</h2>
-            <Button size="sm" variant="ghost" className="ml-auto" onClick={clearAll}><Trash2 className="h-3 w-3 mr-1" /> Clear all</Button>
+        <StepSection n={3} Icon={UtensilsCrossed} title="Choose Each Plate"
+          summary={`${filled}/${deliveries.length} meals chosen`}
+          open={openStep === 3} onToggle={() => setOpenStep((o) => (o === 3 ? 0 : 3))}>
+          <div className="mb-3 flex justify-end">
+            <Button size="sm" variant="ghost" onClick={clearAll}><Trash2 className="h-3 w-3 mr-1" /> Clear All</Button>
           </div>
 
           {deliveries.length === 0 ? (
             <p className="text-sm text-muted-foreground">Set a schedule above to start picking meals.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-sm">
-                <thead>
-                  <tr className="text-left text-muted-foreground border-b">
-                    <th className="p-2">Delivery</th>
-                    <th className="p-2">Slot</th>
-                    <th className="p-2">Meal</th>
-                    <th className="p-2 w-32 text-right">Price</th>
-                    <th className="p-2 w-24"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {deliveries.map((d) => {
-                    const key = `${d.date}|${d.slot}`;
-                    const picked = picks[key] ? menuById.get(picks[key]!) : null;
-                    return (
-                      <tr key={key} className="border-b last:border-0 align-middle">
-                        <td className="p-2 font-medium">{dayLabel(d.date)}</td>
-                        <td className="p-2 capitalize text-muted-foreground">{d.slot}</td>
-                        <td className="p-2">
-                          {picked ? (
-                            <div className="flex items-center gap-2">
-                              <MealImage path={picked.image_url} alt={picked.name} className="h-10 w-10 rounded object-cover" />
-                              <div>
-                                <div className="font-medium flex items-center gap-1.5">
-                                  <span className={picked.food_type === "veg" || picked.food_type === "jain" ? "veg-dot" : "nonveg-dot"} />
-                                  {picked.name}
-                                </div>
-                                <div className="text-xs text-muted-foreground">{picked.calories} kcal · {picked.protein_g}g P</div>
-                              </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {deliveries.map((d) => {
+                const key = `${d.date}|${d.slot}`;
+                const picked = picks[key] ? menuById.get(picks[key]!) : null;
+                const macro = picked && (picked.calories > 0 || picked.protein_g > 0)
+                  ? [picked.calories > 0 ? `${picked.calories} kcal` : null, picked.protein_g > 0 ? `${picked.protein_g}g protein` : null].filter(Boolean).join(" · ")
+                  : null;
+                return (
+                  <div key={key} className={`rounded-xl border p-3 transition ${picked ? "bg-secondary/20" : "border-dashed"}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="font-medium text-sm">{dayLabel(d.date)}</div>
+                      <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wide font-semibold text-secondary-foreground capitalize">{d.slot}</span>
+                    </div>
+                    <div className="mt-3 min-h-[3rem]">
+                      {picked ? (
+                        <div className="flex items-center gap-2.5">
+                          <MealImage path={picked.image_url} alt={picked.name} className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                          <div className="min-w-0">
+                            <div className="font-medium text-sm leading-tight flex items-center gap-1.5">
+                              <span className={picked.food_type === "veg" || picked.food_type === "jain" ? "veg-dot" : "nonveg-dot"} />
+                              <span className="truncate">{picked.name}</span>
                             </div>
-                          ) : (
-                            <span className="text-muted-foreground italic">— not chosen —</span>
-                          )}
-                        </td>
-                        <td className="p-2 text-right">{picked ? `₹${Number(picked.price_inr).toFixed(0)}` : "—"}</td>
-                        <td className="p-2">
-                          <MealPicker
-                            items={menuQ.data ?? []}
-                            currentId={picks[key] ?? null}
-                            slotHint={d.slot}
-                            onPick={(id) => setPicks((cur) => ({ ...cur, [key]: id }))}
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                            {macro && <div className="text-[11px] text-muted-foreground mt-0.5">{macro}</div>}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex h-12 items-center text-sm text-muted-foreground italic">No meal chosen yet</div>
+                      )}
+                    </div>
+                    <div className="mt-3 flex items-center justify-between border-t pt-2.5">
+                      <div className="font-semibold text-sm">{picked ? `₹${Number(picked.price_inr).toFixed(0)}` : <span className="text-muted-foreground font-normal">—</span>}</div>
+                      <MealPicker
+                        items={menuQ.data ?? []}
+                        currentId={picks[key] ?? null}
+                        slotHint={d.slot}
+                        onPick={(id) => setPicks((cur) => ({ ...cur, [key]: id }))}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
-        </Card>
+        </StepSection>
 
         {/* Sticky summary footer */}
         <Card className="mt-5 p-5 flex items-center justify-between gap-4 flex-wrap sticky bottom-3 shadow-lg">
           <div>
-            <div className="text-sm text-muted-foreground">{filled} meal{filled === 1 ? "" : "s"} chosen · {cycle} · {duration} day(s)</div>
+            <div className="text-sm text-muted-foreground">{filled} meal{filled === 1 ? "" : "s"} chosen · {cycle[0].toUpperCase() + cycle.slice(1)} · {duration} day(s)</div>
             <div className="font-display text-3xl font-bold">₹{subtotal.toFixed(0)}<span className="text-sm font-normal text-muted-foreground"> + GST at checkout</span></div>
           </div>
           <Button size="lg" onClick={continueToCheckout} disabled={filled === 0}>
-            Continue to checkout <ArrowRight className="h-4 w-4 ml-1" />
+            Continue to Checkout
           </Button>
         </Card>
       </main>
       <Footer />
     </div>
+  );
+}
+
+function StepSection({ n, Icon, title, summary, open, onToggle, children }: {
+  n: number; Icon: any; title: string; summary: string; open: boolean; onToggle: () => void; children: ReactNode;
+}) {
+  return (
+    <Card className={`mt-4 overflow-hidden transition ${open ? "ring-1 ring-primary/40" : ""}`}>
+      <button type="button" onClick={onToggle}
+        className="flex w-full items-center gap-3 p-4 text-left transition hover:bg-secondary/30">
+        <div className="relative shrink-0">
+          <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
+            <Icon className="h-4.5 w-4.5" />
+          </div>
+          <span className="absolute -right-1.5 -top-1.5 grid h-4.5 w-4.5 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground ring-2 ring-card">{n}</span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="font-semibold leading-tight">{title}</div>
+          <div className="truncate text-xs text-muted-foreground">{summary}</div>
+        </div>
+        <ChevronDown className={`h-5 w-5 shrink-0 text-muted-foreground transition ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && <div className="px-4 pb-4">{children}</div>}
+    </Card>
   );
 }
 
@@ -437,11 +456,11 @@ function MealPicker({ items, currentId, slotHint, onPick }: {
           </div>
           <div className="flex flex-wrap gap-3 items-end text-xs">
             <div>
-              <Label className="text-xs">Min protein (g)</Label>
+              <Label className="text-xs">Min Protein (g)</Label>
               <Input type="number" min={0} value={minProtein || ""} onChange={(e) => setMinProtein(+e.target.value || 0)} className="h-8 w-24" />
             </div>
             <div>
-              <Label className="text-xs">Max calories</Label>
+              <Label className="text-xs">Max Calories</Label>
               <Input type="number" min={0} value={maxCals || ""} onChange={(e) => setMaxCals(+e.target.value || 0)} className="h-8 w-24" />
             </div>
             <label className="inline-flex items-center gap-1.5 ml-auto">

@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { useState } from "react";
 import { MealImage } from "@/components/MealImage";
-import { ChevronDown, ChevronRight, Calendar, Truck, PackageCheck, Check, Clock, MapPin } from "lucide-react";
+import { ChevronDown, ChevronRight, Calendar, Truck, PackageCheck, Check, Clock, MapPin, ChefHat } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/my-subscription")({
   component: MyPage,
@@ -112,7 +112,7 @@ function MyPage() {
           {subsQ.isLoading && <p className="text-muted-foreground">Loading…</p>}
           {(subsQ.data ?? []).length === 0 && !subsQ.isLoading && (
             <Card className="p-6 text-center text-muted-foreground">
-              No active subscriptions. <Link to="/plans" className="text-primary underline">Browse plans</Link> or <Link to="/bowl" className="text-primary underline">build your own bowl</Link>.
+              No active subscriptions. <Link to="/plans" className="text-primary underline">Browse plans</Link> or <Link to="/bowl" className="inline-flex items-center gap-1 align-bottom text-primary underline"><ChefHat className="h-4 w-4" /> Build My Own Bowl</Link>.
             </Card>
           )}
 

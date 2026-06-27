@@ -5,8 +5,15 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { Footer } from "@/components/Footer";
 import { MealImage } from "@/components/MealImage";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Leaf, Dumbbell, Flame, Heart, Sparkles, Truck, ShieldCheck, ArrowRight, Phone } from "lucide-react";
+import { Phone, ChefHat, Dumbbell, Star } from "lucide-react";
+import { BuildBowlCard } from "@/components/BuildBowlCard";
+import { planMeta } from "@/lib/planValue";
+
+const TESTIMONIALS = [
+  { name: "Aarav Mehta", tag: "Muscle Gain", quote: "The high-protein bowls keep me full and on-track. Delivery is always on time and genuinely fresh." },
+  { name: "Priya Nair", tag: "Weight Loss", quote: "Down 4 kg in two months without feeling like I'm dieting. Portions are perfectly controlled." },
+  { name: "Rohan Shah", tag: "Busy Professional", quote: "I pick a plan and forget it — real, home-style food simply shows up at my door every day." },
+];
 import { useSiteSettings } from "@/lib/settings";
 
 export const Route = createFileRoute("/")({
@@ -19,6 +26,11 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
+const CYCLE_SUFFIX: Record<string, string> = {
+  daily: "day", weekly: "week", biweekly: "2 wks", monthly: "month", custom_dates: "plan",
+};
+const cycleSuffix = (c: string) => CYCLE_SUFFIX[c] ?? c;
+
 function Home() {
   const { data: settings } = useSiteSettings();
   const whatsapp = settings?.whatsapp_number ?? "919999999999";
@@ -27,7 +39,8 @@ function Home() {
   const featured = useQuery({
     queryKey: ["home-meals"],
     queryFn: async () => {
-      const { data } = await supabase.from("menu_items").select("*").eq("status", "active").limit(6);
+      const { data } = await supabase.from("menu_items").select("*").eq("status", "active")
+        .order("calories", { ascending: false }).limit(8);
       return data ?? [];
     },
   });
@@ -49,21 +62,11 @@ function Home() {
   return (
     <div className="min-h-screen">
       <SiteHeader />
+      <h1 className="sr-only">Amrutam Bowl — Healthy Meal Subscriptions in India</h1>
 
-      {/* Slim hero banner */}
-      <section className="relative overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
-        <div className="mx-auto max-w-6xl px-4 py-3 md:py-4 text-primary-foreground text-center">
-          <h1 className="font-display text-base md:text-lg leading-tight">Personalized Healthy Food Bowls</h1>
-          <div className="font-display text-xs md:text-sm opacity-90 leading-tight">Delivered Daily</div>
-        </div>
-      </section>
-
-      {/* Primary CTAs — side by side */}
-      <section className="mx-auto max-w-6xl px-4 pt-6 md:pt-8">
-        <div className="grid grid-cols-2 gap-3 max-w-xl">
-          <Link to="/plans"><Button size="lg" className="w-full">Bowl Plans</Button></Link>
-          <Link to="/bowl"><Button size="lg" variant="outline" className="w-full">Build a Bowl</Button></Link>
-        </div>
+      {/* Build My Own Bowl — shared compact card with steps */}
+      <section className="mx-auto max-w-6xl px-4 py-4">
+        <BuildBowlCard />
       </section>
 
       {/* Popular plans */}
@@ -71,13 +74,14 @@ function Home() {
         <section className="mx-auto max-w-6xl px-4 py-10 md:py-14">
           <div className="flex items-end justify-between flex-wrap gap-2">
             <h2 className="font-display text-2xl md:text-3xl">Popular Bowl Plans</h2>
-            <Link to="/plans" className="text-sm text-primary font-medium inline-flex items-center gap-1">See all <ArrowRight className="h-3.5 w-3.5" /></Link>
+            <Link to="/plans" className="text-sm text-primary font-medium hover:underline">See all</Link>
           </div>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {plans.data?.map((p: any) => {
               const items = Array.from(new Map(((p.plan_items ?? [])
                 .map((pi: any) => pi.menu_items).filter((m: any) => m))
                 .map((m: any) => [m.id, m])).values()) as any[];
+              const meta = planMeta(p);
               return (
                 <Link key={p.id} to="/plans/$id" params={{ id: p.id }} className="group">
                   <Card className="overflow-hidden hover:shadow-lg transition h-full flex flex-col">
@@ -88,30 +92,36 @@ function Home() {
                         <div className="text-[10px] uppercase tracking-wide text-primary font-semibold">{p.billing_cycle}</div>
                       </div>
                       <div className="font-semibold text-sm leading-tight">{p.name}</div>
-                      <div className="text-[11px] text-muted-foreground">{p.meals_per_day} meals/day · {p.days_per_week} d/wk</div>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+                        <span>{p.meals_per_day} meal{p.meals_per_day === 1 ? "" : "s"}/day · {p.days_per_week} d/wk</span>
+                        {meta.avgProtein > 0 && (
+                          <span className="inline-flex items-center gap-0.5 font-semibold text-primary"><Dumbbell className="h-3 w-3" /> ~{meta.avgProtein}g</span>
+                        )}
+                      </div>
 
                       {items.length > 0 && (
-                        <div className="rounded-md bg-secondary/40 p-2 space-y-1">
+                        <div className="rounded-md bg-secondary/40 p-2 space-y-1.5">
                           <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">What's inside · {items.length} dishes</div>
-                          <ul className="text-[11px] space-y-0.5">
-                            {items.slice(0, 3).map((m: any) => (
-                              <li key={m.id} className="flex items-center gap-1.5 truncate">
-                                <span className={m.food_type === "veg" || m.food_type === "jain" ? "veg-dot" : "nonveg-dot"} aria-hidden />
-                                <span className="truncate">{m.name}</span>
-                              </li>
+                          <div className="flex flex-col gap-1.5">
+                            {items.map((m: any) => (
+                              <div key={m.id} className="flex items-center gap-2 rounded-md border bg-card/70 p-1 pr-2">
+                                <MealImage path={m.image_url} alt={m.name}
+                                  className="h-8 w-8 shrink-0 rounded object-cover" />
+                                <div className="min-w-0 flex items-center gap-1.5">
+                                  <span className={m.food_type === "veg" || m.food_type === "jain" ? "veg-dot shrink-0" : "nonveg-dot shrink-0"} aria-hidden />
+                                  <span className="truncate text-[11px] font-medium leading-tight">{m.name}</span>
+                                </div>
+                              </div>
                             ))}
-                            {items.length > 3 && (
-                              <li className="text-muted-foreground text-[10px]">+ {items.length - 3} more</li>
-                            )}
-                          </ul>
+                          </div>
                         </div>
                       )}
 
                       <div className="mt-auto pt-2 flex items-center justify-between border-t">
                         <div className="font-bold text-lg leading-none">₹{Number(p.price_inr).toFixed(0)}
-                          <span className="text-[10px] font-normal text-muted-foreground">/{p.billing_cycle === "weekly" ? "wk" : p.billing_cycle === "monthly" ? "mo" : p.billing_cycle.slice(0,3)}</span>
+                          <span className="text-[10px] font-normal text-muted-foreground">/{cycleSuffix(p.billing_cycle)}</span>
                         </div>
-                        <span className="text-xs font-medium text-primary group-hover:underline">View →</span>
+                        <span className="text-xs font-medium text-primary group-hover:underline">View</span>
                       </div>
                     </div>
                   </Card>
@@ -124,51 +134,77 @@ function Home() {
       )}
 
 
-      <section className="bg-secondary/30 py-12">
+      {(featured.data?.length ?? 0) > 0 && (
+        <section className="mx-auto max-w-6xl px-4 py-10">
+          <div className="flex items-end justify-between flex-wrap gap-2">
+            <div>
+              <h2 className="font-display text-2xl md:text-3xl font-bold">Explore Our Menu</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Fresh dishes you can mix &amp; match into your own bowl.</p>
+            </div>
+            <Link to="/bowl" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"><ChefHat className="h-4 w-4" /> Build My Own Bowl</Link>
+          </div>
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {featured.data?.map((it: any) => {
+              const cals = Number(it.calories) || 0;
+              const pcf = [
+                Number(it.protein_g) > 0 ? `P ${Number(it.protein_g)}g` : null,
+                Number(it.carbs_g) > 0 ? `C ${Number(it.carbs_g)}g` : null,
+                Number(it.fat_g) > 0 ? `F ${Number(it.fat_g)}g` : null,
+              ].filter(Boolean).join(" · ");
+              return (
+                <Link key={it.id} to="/bowl"
+                  className="group block overflow-hidden rounded-xl border bg-card transition hover:-translate-y-0.5 hover:shadow-md">
+                  <MealImage path={it.image_url} alt={it.name} className="aspect-square w-full object-cover transition duration-500 group-hover:scale-105" />
+                  <div className="p-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className={it.food_type === "veg" || it.food_type === "jain" ? "veg-dot shrink-0" : "nonveg-dot shrink-0"} aria-hidden />
+                      <span className="truncate text-sm font-medium leading-tight">{it.name}</span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between gap-2">
+                      {Number(it.price_inr) > 0 ? (
+                        <span className="text-xs font-semibold text-primary">₹{Number(it.price_inr).toFixed(0)}</span>
+                      ) : <span />}
+                      {cals > 0 && <span className="text-[10px] font-medium text-muted-foreground">{cals} kcal</span>}
+                    </div>
+                    {pcf && <div className="mt-0.5 truncate text-[10px] text-muted-foreground">{pcf}</div>}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Testimonials */}
+      <section className="py-12 md:py-14" style={{ background: "var(--color-cream)" }}>
         <div className="mx-auto max-w-6xl px-4">
-          <h2 className="font-display text-2xl md:text-3xl font-bold text-center">Goals we cook for</h2>
-          <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            {[
-              { i: Flame, l: "Weight Loss", d: "Calorie-deficit, high fiber" },
-              { i: Dumbbell, l: "Muscle Gain", d: "High-protein, lean carbs" },
-              { i: Heart, l: "Balanced", d: "Everyday nutrition" },
-              { i: Leaf, l: "Keto", d: "Low-carb, high-fat" },
-            ].map(({ i: Icon, l, d }) => (
-              <Link key={l} to="/plans" className="rounded-2xl bg-card p-5 shadow-[var(--shadow-card)] border hover:shadow-md transition">
-                <Icon className="h-7 w-7 text-primary" />
-                <div className="mt-2 font-semibold">{l}</div>
-                <div className="text-xs text-muted-foreground">{d}</div>
-              </Link>
+          <div className="text-center">
+            <h2 className="font-display text-2xl md:text-3xl font-bold">Loved by Our Customers</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Real food, real results — here's what they say.</p>
+          </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {TESTIMONIALS.map((t) => (
+              <div key={t.name} className="rounded-2xl border bg-card p-5 shadow-[var(--shadow-card)]">
+                <div className="flex gap-0.5 text-[var(--color-saffron)]">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-current" />
+                  ))}
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-foreground">"{t.quote}"</p>
+                <div className="mt-4 flex items-center gap-3">
+                  <div className="grid h-9 w-9 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                    {t.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold leading-tight">{t.name}</div>
+                    <div className="text-xs text-muted-foreground">{t.tag}</div>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       </section>
-
-      {(featured.data?.length ?? 0) > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-12">
-          <div className="flex items-end justify-between flex-wrap gap-2">
-            <h2 className="font-display text-2xl md:text-3xl font-bold">From our kitchen</h2>
-            <Link to="/bowl" className="text-sm text-primary font-medium">Build your bowl →</Link>
-          </div>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-            {featured.data?.map((it: any) => (
-              <Card key={it.id} className="overflow-hidden">
-                <MealImage path={it.image_url} alt={it.name} className="h-40 w-full object-cover" />
-                <div className="p-4">
-                  <div className="flex items-center gap-1.5">
-                    <span className={it.food_type === "veg" || it.food_type === "jain" ? "veg-dot" : "nonveg-dot"} aria-hidden />
-                    <span className="font-semibold">{it.name}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">{it.calories} kcal · P {it.protein_g}g · C {it.carbs_g}g · F {it.fat_g}g</div>
-                </div>
-              </Card>
-            ))}
-          </div>
-          <div className="mt-8 text-center">
-            <Link to="/bowl"><Button size="lg">Build Your Own Bowl</Button></Link>
-          </div>
-        </section>
-      )}
 
       {/* Contact / questions */}
       <section className="bg-secondary/30 py-12 border-t">
