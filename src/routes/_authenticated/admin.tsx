@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChefHat, UtensilsCrossed, MapPin, ClipboardList, LogOut, ShieldCheck, Settings, Users, CalendarDays, Megaphone } from "lucide-react";
+import { ChefHat, UtensilsCrossed, MapPin, ClipboardList, LogOut, ShieldCheck, Settings, Users, CalendarDays, Megaphone, Tag } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
@@ -14,6 +14,7 @@ const NAV = [
   { to: "/admin", label: "Dashboard", icon: ShieldCheck, exact: true },
   { to: "/admin/menu", label: "Menu Items", icon: UtensilsCrossed },
   { to: "/admin/plans", label: "Plans", icon: ChefHat },
+  { to: "/admin/promos", label: "Promo Codes", icon: Tag },
   { to: "/admin/pincodes", label: "Pincodes", icon: MapPin },
   { to: "/admin/pincode-requests", label: "Expansion", icon: Megaphone },
   { to: "/admin/orders", label: "Orders", icon: ClipboardList },
