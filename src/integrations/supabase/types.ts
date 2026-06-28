@@ -420,6 +420,118 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_codes: {
+        Row: {
+          applies_to: string
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean
+          max_discount_inr: number | null
+          max_uses: number | null
+          min_subtotal_inr: number
+          per_user_limit: number
+          updated_at: string
+          uses: number
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          applies_to?: string
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          id?: string
+          is_active?: boolean
+          max_discount_inr?: number | null
+          max_uses?: number | null
+          min_subtotal_inr?: number
+          per_user_limit?: number
+          updated_at?: string
+          uses?: number
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Update: {
+          applies_to?: string
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          max_discount_inr?: number | null
+          max_uses?: number | null
+          min_subtotal_inr?: number
+          per_user_limit?: number
+          updated_at?: string
+          uses?: number
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: []
+      }
+      promo_redemptions: {
+        Row: {
+          created_at: string
+          discount_inr: number
+          id: string
+          order_id: string | null
+          promo_code_id: string
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          discount_inr: number
+          id?: string
+          order_id?: string | null
+          promo_code_id: string
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          discount_inr?: number
+          id?: string
+          order_id?: string | null
+          promo_code_id?: string
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_redemptions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_redemptions_promo_code_id_fkey"
+            columns: ["promo_code_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_redemptions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       serviceable_pincodes: {
         Row: {
           area: string | null
@@ -670,6 +782,19 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      validate_promo: {
+        Args: {
+          _code: string
+          _source: string
+          _subtotal: number
+          _user_id: string
+        }
+        Returns: {
+          discount_inr: number
+          promo_id: string
+          reason: string
+        }[]
       }
     }
     Enums: {
