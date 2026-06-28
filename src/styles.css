@@ -114,6 +114,51 @@
   h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.015em; font-weight: 600; }
 }
 
+/* ---- Motion & polish ---- */
+@keyframes amrutam-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes amrutam-shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* Scroll-reveal: hidden until .is-visible is added by the Reveal component */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+.float-slow { animation: amrutam-float 6s ease-in-out infinite; }
+.float-slower { animation: amrutam-float 9s ease-in-out infinite; }
+
+/* Shimmer skeleton */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-muted);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.5), transparent);
+  animation: amrutam-shimmer 1.6s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .float-slow, .float-slower { animation: none; }
+  .skeleton::after { animation: none; }
+}
+
 @utility veg-dot {
   display: inline-block;
   width: 0.75rem;

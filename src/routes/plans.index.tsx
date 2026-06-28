@@ -7,9 +7,9 @@ import { Footer } from "@/components/Footer";
 import { MealImage } from "@/components/MealImage";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, ChefHat, Dumbbell, BadgePercent } from "lucide-react";
+import { Sparkles, ChefHat, Dumbbell, BadgePercent, Leaf, Wheat, Flame } from "lucide-react";
 import { BuildBowlCard } from "@/components/BuildBowlCard";
-import { planMeta } from "@/lib/planValue";
+import { planMeta, type PlanMeta } from "@/lib/planValue";
 
 const CYCLE_SUFFIX: Record<string, string> = {
   daily: "day", weekly: "week", biweekly: "2 wks", monthly: "month", custom_dates: "plan",
@@ -24,7 +24,16 @@ const GOALS = [
   { v: "keto", label: "Keto" },
 ];
 
+// Derived dietary + health facets (computed from each plan's dishes — no schema needed).
+const FACETS: { v: string; label: string; Icon: any; test: (m: PlanMeta) => boolean }[] = [
+  { v: "pureVeg", label: "Pure Veg", Icon: Leaf, test: (m) => m.pureVeg },
+  { v: "highProtein", label: "High Protein", Icon: Dumbbell, test: (m) => m.highProtein },
+  { v: "highFiber", label: "High Fibre", Icon: Wheat, test: (m) => m.highFiber },
+  { v: "lowCalorie", label: "Low Calorie", Icon: Flame, test: (m) => m.lowCalorie },
+];
+
 export const Route = createFileRoute("/plans/")({
+  validateSearch: (s: Record<string, unknown>) => ({ goal: typeof s.goal === "string" ? s.goal : undefined }),
   head: () => ({
     meta: [
       { title: "Popular Food Bowl Plans — Amrutam Bowl" },
@@ -36,13 +45,21 @@ export const Route = createFileRoute("/plans/")({
 });
 
 function PlansPage() {
-  const [goal, setGoal] = useState("all");
+  const { goal: goalParam } = Route.useSearch();
+  const [goal, setGoal] = useState(goalParam ?? "all");
+  const [facets, setFacets] = useState<Set<string>>(new Set());
+  const toggleFacet = (v: string) =>
+    setFacets((cur) => {
+      const next = new Set(cur);
+      next.has(v) ? next.delete(v) : next.add(v);
+      return next;
+    });
   const plansQ = useQuery({
     queryKey: ["plans-public-with-items"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("plans")
-        .select("*, plan_items(menu_items(id,name,image_url,food_type,price_inr,protein_g))")
+        .select("*, plan_items(menu_items(id,name,image_url,food_type,price_inr,protein_g,fiber_g,calories))")
         .eq("status", "active").order("is_popular" as any, { ascending: false }).order("price_inr");
       if (error) throw error;
       return data as any[];
@@ -60,7 +77,12 @@ function PlansPage() {
     if (metas.get(sorted[0].id)!.perMeal < metas.get(sorted[1].id)!.perMeal) bestValueId = sorted[0].id;
   }
 
-  const visible = goal === "all" ? plans : plans.filter((p) => p.goal_type === goal);
+  const activeFacets = FACETS.filter((f) => facets.has(f.v));
+  const visible = plans.filter((p) => {
+    if (goal !== "all" && p.goal_type !== goal) return false;
+    const m = metas.get(p.id)!;
+    return activeFacets.every((f) => f.test(m));
+  });
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -74,17 +96,39 @@ function PlansPage() {
           </div>
         </div>
 
-        {/* Goal finder */}
+        {/* Goal finder + dietary/health filters */}
         {plans.length > 0 && (
-          <div className="mt-5">
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">What's your goal?</div>
-            <div className="flex flex-wrap gap-2">
-              {GOALS.map((g) => (
-                <button key={g.v} type="button" onClick={() => setGoal(g.v)}
-                  className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${goal === g.v ? "bg-primary text-primary-foreground border-primary" : "hover:bg-secondary"}`}>
-                  {g.label}
-                </button>
-              ))}
+          <div className="mt-5 space-y-3">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">What's your goal?</div>
+              <div className="flex flex-wrap gap-2">
+                {GOALS.map((g) => (
+                  <button key={g.v} type="button" onClick={() => setGoal(g.v)}
+                    className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${goal === g.v ? "bg-primary text-primary-foreground border-primary" : "hover:bg-secondary"}`}>
+                    {g.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Refine</div>
+              <div className="flex flex-wrap gap-2">
+                {FACETS.map((f) => {
+                  const on = facets.has(f.v);
+                  return (
+                    <button key={f.v} type="button" onClick={() => toggleFacet(f.v)}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition ${on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-secondary"}`}>
+                      <f.Icon className="h-3.5 w-3.5" /> {f.label}
+                    </button>
+                  );
+                })}
+                {(facets.size > 0 || goal !== "all") && (
+                  <button type="button" onClick={() => { setFacets(new Set()); setGoal("all"); }}
+                    className="rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground">
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -95,7 +139,7 @@ function PlansPage() {
         )}
         {!plansQ.isLoading && plans.length > 0 && visible.length === 0 && (
           <Card className="p-8 mt-6 text-center text-muted-foreground">
-            No plans for this goal yet — <Link to="/bowl" className="inline-flex items-center gap-1 align-bottom text-primary font-medium underline"><ChefHat className="h-4 w-4" /> Build My Own Bowl</Link>.
+            No plans match these filters — <Link to="/bowl" className="inline-flex items-center gap-1 align-bottom text-primary font-medium underline"><ChefHat className="h-4 w-4" /> Build My Own Bowl</Link> instead.
           </Card>
         )}
 
@@ -133,6 +177,15 @@ function PlansPage() {
                       <span className="rounded-md bg-secondary px-2 py-1 font-medium text-secondary-foreground">{p.days_per_week} day{p.days_per_week === 1 ? "" : "s"}/week</span>
                       {meta.avgProtein > 0 && (
                         <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 font-semibold text-primary"><Dumbbell className="h-3 w-3" /> ~{meta.avgProtein}g protein</span>
+                      )}
+                      {meta.pureVeg && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-[var(--color-veg)]/10 px-2 py-1 font-semibold text-[var(--color-veg)]"><Leaf className="h-3 w-3" /> Pure Veg</span>
+                      )}
+                      {meta.highFiber && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1 font-semibold text-secondary-foreground"><Wheat className="h-3 w-3" /> High Fibre</span>
+                      )}
+                      {meta.lowCalorie && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1 font-semibold text-secondary-foreground"><Flame className="h-3 w-3 text-[var(--color-terracotta)]" /> Low Cal</span>
                       )}
                     </div>
                     {uniq.length > 0 && (

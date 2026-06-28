@@ -5,16 +5,27 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { Footer } from "@/components/Footer";
 import { MealImage } from "@/components/MealImage";
 import { Card } from "@/components/ui/card";
-import { Phone, ChefHat, Dumbbell, Star } from "lucide-react";
+import {
+  Phone, ChefHat, Dumbbell, Star, Salad, Flame, Leaf,
+  Users, ArrowRight, Plus, Target,
+} from "lucide-react";
 import { BuildBowlCard } from "@/components/BuildBowlCard";
+import { Reveal } from "@/components/Reveal";
 import { planMeta } from "@/lib/planValue";
+import { useSiteSettings } from "@/lib/settings";
 
 const TESTIMONIALS = [
   { name: "Aarav Mehta", tag: "Muscle Gain", quote: "The high-protein bowls keep me full and on-track. Delivery is always on time and genuinely fresh." },
   { name: "Priya Nair", tag: "Weight Loss", quote: "Down 4 kg in two months without feeling like I'm dieting. Portions are perfectly controlled." },
   { name: "Rohan Shah", tag: "Busy Professional", quote: "I pick a plan and forget it — real, home-style food simply shows up at my door every day." },
 ];
-import { useSiteSettings } from "@/lib/settings";
+
+const GOALS = [
+  { v: "weight-loss", label: "Weight Loss" },
+  { v: "muscle-gain", label: "Muscle Gain" },
+  { v: "balanced", label: "Balanced" },
+  { v: "keto", label: "Keto" },
+];
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -36,6 +47,8 @@ function Home() {
   const whatsapp = settings?.whatsapp_number ?? "919999999999";
   const phone = settings?.phone_number ?? "+919999999999";
   const prefill = encodeURIComponent(settings?.whatsapp_prefill ?? "Hi! I have a question about my meal subscription.");
+  const corporatePrefill = encodeURIComponent("Hi! I'd like to enquire about corporate meal plans for my team.");
+
   const featured = useQuery({
     queryKey: ["home-meals"],
     queryFn: async () => {
@@ -58,133 +71,263 @@ function Home() {
     },
   });
 
-
   return (
     <div className="min-h-screen">
       <SiteHeader />
       <h1 className="sr-only">Amrutam Bowl — Healthy Meal Subscriptions in India</h1>
 
-      {/* Build My Own Bowl — shared compact card with steps */}
-      <section className="mx-auto max-w-6xl px-4 py-4">
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+          <div className="float-slow absolute -top-20 -right-16 h-72 w-72 rounded-full opacity-40 blur-3xl" style={{ background: "var(--color-saffron)" }} />
+          <div className="float-slower absolute top-24 -left-24 h-72 w-72 rounded-full opacity-25 blur-3xl" style={{ background: "var(--color-primary)" }} />
+        </div>
+        <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-8 md:grid-cols-2 md:py-12">
+          <Reveal>
+            <h2 className="font-display text-3xl md:text-5xl font-bold leading-[1.05] tracking-tight">
+              Real Food, Made for <span className="text-primary">Your Goals</span>
+            </h2>
+            <p className="mt-3 max-w-md text-muted-foreground md:text-lg">
+              Every bowl has a purpose — wholesome, protein-rich meals crafted fresh for you.
+            </p>
+            <div className="mt-6">
+              <Link to="/bowl" className="inline-flex items-center gap-1.5 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:shadow-lg">
+                <ChefHat className="h-4 w-4" /> Build My Own Bowl
+              </Link>
+            </div>
+          </Reveal>
+          <Reveal delay={120} className="relative mx-auto w-full max-w-xs sm:max-w-sm">
+            <div className="float-slow overflow-hidden rounded-[2rem] border bg-card p-4 shadow-[var(--shadow-soft)]">
+              <img src="/brand/amrutam-bowl.jpg" alt="A wholesome Amrutam bowl" className="aspect-square w-full rounded-2xl object-cover" />
+            </div>
+            <span className="float-slower absolute -left-2 top-8 inline-flex items-center gap-1 rounded-full border bg-card px-3 py-1.5 text-xs font-semibold shadow-[var(--shadow-card)]">
+              <Flame className="h-3.5 w-3.5 text-[var(--color-terracotta)]" /> Fresh daily
+            </span>
+            <span className="float-slow absolute -right-2 bottom-12 inline-flex items-center gap-1 rounded-full border bg-card px-3 py-1.5 text-xs font-semibold shadow-[var(--shadow-card)]">
+              <Dumbbell className="h-3.5 w-3.5 text-primary" /> High protein
+            </span>
+            <span className="float-slower absolute right-6 -top-2 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow">
+              <Leaf className="h-3.5 w-3.5" /> Macro-balanced
+            </span>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Build My Own Bowl */}
+      <section className="mx-auto max-w-6xl px-4 pb-8">
         <BuildBowlCard />
       </section>
 
-      {/* Popular plans */}
-      {(plans.data?.length ?? 0) > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-10 md:py-14">
-          <div className="flex items-end justify-between flex-wrap gap-2">
-            <h2 className="font-display text-2xl md:text-3xl">Popular Bowl Plans</h2>
+      {/* Bowl Plans */}
+      {(plans.isLoading || (plans.data?.length ?? 0) > 0) && (
+        <section className="mx-auto max-w-6xl px-4 py-6 md:py-10">
+          <Reveal className="flex items-end justify-between flex-wrap gap-2">
+            <h2 className="font-display text-2xl md:text-3xl inline-flex items-center gap-2"><Salad className="h-6 w-6 text-primary" /> Bowl Plans</h2>
             <Link to="/plans" className="text-sm text-primary font-medium hover:underline">See all</Link>
-          </div>
+          </Reveal>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {plans.data?.map((p: any) => {
+            {plans.isLoading
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+                    <div className="skeleton h-56 w-full" />
+                    <div className="space-y-2 p-3.5">
+                      <div className="skeleton h-4 w-3/4 rounded" />
+                      <div className="skeleton h-3 w-full rounded" />
+                      <div className="skeleton mt-3 h-9 w-full rounded-full" />
+                    </div>
+                  </div>
+                ))
+              : plans.data?.map((p: any, i: number) => {
               const items = Array.from(new Map(((p.plan_items ?? [])
                 .map((pi: any) => pi.menu_items).filter((m: any) => m))
                 .map((m: any) => [m.id, m])).values()) as any[];
               const meta = planMeta(p);
+              const ingredients = items.map((m: any) => m.name).join(" · ");
+              const cals = items.map((m: any) => Number(m.calories)).filter((n: number) => n > 0);
+              const avgCal = cals.length ? Math.round(cals.reduce((a: number, b: number) => a + b, 0) / cals.length) : 0;
               return (
-                <Link key={p.id} to="/plans/$id" params={{ id: p.id }} className="group">
-                  <Card className="overflow-hidden hover:shadow-lg transition h-full flex flex-col">
-                    <MealImage path={p.image_url} alt={p.name} className="h-28 w-full object-cover" />
-                    <div className="p-3 flex-1 flex flex-col gap-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{String(p.goal_type).replace("-", " ")}</div>
-                        <div className="text-[10px] uppercase tracking-wide text-primary font-semibold">{p.billing_cycle}</div>
-                      </div>
-                      <div className="font-semibold text-sm leading-tight">{p.name}</div>
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
-                        <span>{p.meals_per_day} meal{p.meals_per_day === 1 ? "" : "s"}/day · {p.days_per_week} d/wk</span>
-                        {meta.avgProtein > 0 && (
-                          <span className="inline-flex items-center gap-0.5 font-semibold text-primary"><Dumbbell className="h-3 w-3" /> ~{meta.avgProtein}g</span>
-                        )}
-                      </div>
-
-                      {items.length > 0 && (
-                        <div className="rounded-md bg-secondary/40 p-2 space-y-1.5">
-                          <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">What's inside · {items.length} dishes</div>
-                          <div className="flex flex-col gap-1.5">
-                            {items.map((m: any) => (
-                              <div key={m.id} className="flex items-center gap-2 rounded-md border bg-card/70 p-1 pr-2">
-                                <MealImage path={m.image_url} alt={m.name}
-                                  className="h-8 w-8 shrink-0 rounded object-cover" />
-                                <div className="min-w-0 flex items-center gap-1.5">
-                                  <span className={m.food_type === "veg" || m.food_type === "jain" ? "veg-dot shrink-0" : "nonveg-dot shrink-0"} aria-hidden />
-                                  <span className="truncate text-[11px] font-medium leading-tight">{m.name}</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
+                <Reveal key={p.id} delay={i * 70} className="h-full">
+                  <Link to="/plans/$id" params={{ id: p.id }} className="group block h-full">
+                  <Card className="overflow-hidden rounded-2xl border shadow-sm transition hover:-translate-y-1 hover:shadow-lg h-full flex flex-col">
+                    <div className="relative">
+                      <MealImage path={p.image_url} alt={p.name} className="h-56 w-full object-cover" />
+                      {p.is_popular ? (
+                        <span className="absolute left-2.5 top-2.5 rounded-full bg-[var(--color-saffron)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--color-saffron-foreground)] shadow">Popular</span>
+                      ) : (
+                        <span className="absolute left-2.5 top-2.5 rounded-full bg-primary px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary-foreground shadow capitalize">{String(p.goal_type).replace("-", " ")}</span>
                       )}
-
-                      <div className="mt-auto pt-2 flex items-center justify-between border-t">
-                        <div className="font-bold text-lg leading-none">₹{Number(p.price_inr).toFixed(0)}
-                          <span className="text-[10px] font-normal text-muted-foreground">/{cycleSuffix(p.billing_cycle)}</span>
-                        </div>
-                        <span className="text-xs font-medium text-primary group-hover:underline">View</span>
+                      <span className="absolute right-2.5 top-2.5 rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground shadow">₹{Number(p.price_inr).toFixed(0)}<span className="font-normal opacity-80">/{cycleSuffix(p.billing_cycle)}</span></span>
+                    </div>
+                    <div className="p-3.5 flex-1 flex flex-col gap-2.5">
+                      <h3 className="font-semibold leading-tight line-clamp-1">{p.name}</h3>
+                      {ingredients && (
+                        <p className="text-xs leading-snug text-muted-foreground line-clamp-2">{ingredients}</p>
+                      )}
+                      <div className="flex flex-wrap gap-1.5">
+                        {avgCal > 0 && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground"><Flame className="h-3 w-3 text-[var(--color-terracotta)]" /> ~{avgCal} kcal</span>
+                        )}
+                        {meta.avgProtein > 0 && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary"><Dumbbell className="h-3 w-3" /> ~{meta.avgProtein}g protein</span>
+                        )}
+                        <span className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground">{p.meals_per_day} meal{p.meals_per_day === 1 ? "" : "s"}/day</span>
                       </div>
+                      <span className="mt-auto flex items-center justify-center gap-1 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition group-hover:shadow-md">
+                        View Plan
+                      </span>
                     </div>
                   </Card>
-                </Link>
+                  </Link>
+                </Reveal>
               );
             })}
           </div>
-
         </section>
       )}
 
-
-      {(featured.data?.length ?? 0) > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-10">
-          <div className="flex items-end justify-between flex-wrap gap-2">
+      {/* Explore Our Menu — Bowlify-style item cards */}
+      {(featured.isLoading || (featured.data?.length ?? 0) > 0) && (
+        <section className="mx-auto max-w-6xl px-4 py-6 md:py-10">
+          <Reveal className="flex items-end justify-between flex-wrap gap-2">
             <div>
+              <span className="text-xs font-semibold uppercase tracking-wide text-primary">Featured</span>
               <h2 className="font-display text-2xl md:text-3xl font-bold">Explore Our Menu</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Fresh dishes you can mix &amp; match into your own bowl.</p>
             </div>
             <Link to="/bowl" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"><ChefHat className="h-4 w-4" /> Build My Own Bowl</Link>
-          </div>
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {featured.data?.map((it: any) => {
-              const cals = Number(it.calories) || 0;
-              const pcf = [
-                Number(it.protein_g) > 0 ? `P ${Number(it.protein_g)}g` : null,
-                Number(it.carbs_g) > 0 ? `C ${Number(it.carbs_g)}g` : null,
-                Number(it.fat_g) > 0 ? `F ${Number(it.fat_g)}g` : null,
-              ].filter(Boolean).join(" · ");
-              return (
-                <Link key={it.id} to="/bowl"
-                  className="group block overflow-hidden rounded-xl border bg-card transition hover:-translate-y-0.5 hover:shadow-md">
-                  <MealImage path={it.image_url} alt={it.name} className="aspect-square w-full object-cover transition duration-500 group-hover:scale-105" />
-                  <div className="p-2.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className={it.food_type === "veg" || it.food_type === "jain" ? "veg-dot shrink-0" : "nonveg-dot shrink-0"} aria-hidden />
-                      <span className="truncate text-sm font-medium leading-tight">{it.name}</span>
+          </Reveal>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {featured.isLoading
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+                    <div className="skeleton h-60 w-full" />
+                    <div className="space-y-2 p-3.5">
+                      <div className="skeleton h-4 w-2/3 rounded" />
+                      <div className="skeleton h-3 w-full rounded" />
+                      <div className="skeleton mt-3 h-9 w-full rounded-full" />
                     </div>
-                    <div className="mt-1 flex items-center justify-between gap-2">
-                      {Number(it.price_inr) > 0 ? (
-                        <span className="text-xs font-semibold text-primary">₹{Number(it.price_inr).toFixed(0)}</span>
-                      ) : <span />}
-                      {cals > 0 && <span className="text-[10px] font-medium text-muted-foreground">{cals} kcal</span>}
-                    </div>
-                    {pcf && <div className="mt-0.5 truncate text-[10px] text-muted-foreground">{pcf}</div>}
                   </div>
-                </Link>
+                ))
+              : featured.data?.map((it: any, i: number) => {
+              const cals = Number(it.calories) || 0;
+              const protein = Number(it.protein_g) || 0;
+              const isVeg = it.food_type === "veg" || it.food_type === "jain";
+              const badge = it.is_popular
+                ? { label: "Bestseller", cls: "bg-[var(--color-saffron)] text-[var(--color-saffron-foreground)]" }
+                : protein >= 25
+                  ? { label: "High Protein", cls: "bg-primary text-primary-foreground" }
+                  : isVeg
+                    ? { label: "Veg", cls: "bg-primary text-primary-foreground" }
+                    : { label: "Non-Veg", cls: "bg-[var(--color-terracotta)] text-white" };
+              return (
+                <Reveal key={it.id} delay={i * 70} className="h-full">
+                <div className="group flex h-full flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                  <div className="relative">
+                    <MealImage path={it.image_url} alt={it.name} className="h-60 w-full object-cover" />
+                    <span className={`absolute left-2.5 top-2.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide shadow ${badge.cls}`}>{badge.label}</span>
+                    {Number(it.price_inr) > 0 && (
+                      <span className="absolute right-2.5 top-2.5 rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground shadow">₹{Number(it.price_inr).toFixed(0)}</span>
+                    )}
+                    {protein > 0 && (
+                      <span className="absolute bottom-2.5 left-2.5 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-primary-foreground shadow"><Leaf className="h-3 w-3" /> {protein}g protein</span>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col gap-2 p-3.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className={isVeg ? "veg-dot shrink-0" : "nonveg-dot shrink-0"} aria-hidden />
+                      <h3 className="font-semibold leading-tight line-clamp-1">{it.name}</h3>
+                    </div>
+                    {it.description && (
+                      <p className="text-xs leading-snug text-muted-foreground line-clamp-2">{it.description}</p>
+                    )}
+                    {cals > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground"><Flame className="h-3 w-3 text-[var(--color-terracotta)]" /> {cals} kcal</span>
+                        {protein >= 25 && (
+                          <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium text-muted-foreground">High Protein</span>
+                        )}
+                      </div>
+                    )}
+                    <Link to="/bowl" className="mt-auto flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:shadow-md">
+                      <Plus className="h-4 w-4" /> Customise &amp; Add
+                    </Link>
+                  </div>
+                </div>
+                </Reveal>
               );
             })}
           </div>
         </section>
       )}
+
+      {/* CTA band */}
+      <section className="py-12 md:py-14 text-center" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
+        <div className="mx-auto max-w-3xl px-4">
+          <h2 className="font-display text-2xl md:text-4xl font-bold">Eat Real. Feel Amazing. Live Better.</h2>
+          <p className="mt-2 text-sm opacity-90">Fresh, chef-crafted meals delivered to your door every day.</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link to="/plans" className="inline-flex items-center gap-1.5 rounded-full bg-background px-6 py-3 text-sm font-semibold text-primary transition hover:shadow-md">
+              Explore Plans <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link to="/bowl" className="inline-flex items-center gap-1.5 rounded-full border-2 border-primary-foreground/70 px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary-foreground hover:text-primary">
+              <ChefHat className="h-4 w-4" /> Build My Own Bowl
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Goal finder */}
+      <section className="mx-auto max-w-6xl px-4 py-12">
+        <div className="rounded-3xl border bg-card p-6 text-center shadow-[var(--shadow-card)] md:p-10">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+            <Target className="h-3.5 w-3.5" /> Eating for a goal?
+          </span>
+          <h2 className="mt-3 font-display text-2xl md:text-3xl font-bold">Tell us your goal — we'll match your bowl.</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Weight loss, muscle gain, balanced or keto — find a plan tuned to you.</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            {GOALS.map((g) => (
+              <Link key={g.v} to="/plans" search={{ goal: g.v }}
+                className="rounded-full border px-4 py-2 text-sm font-medium transition hover:border-primary hover:bg-primary/5">
+                {g.label}
+              </Link>
+            ))}
+          </div>
+          <div className="mt-6">
+            <Link to="/bowl" className="inline-flex items-center gap-1.5 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:shadow-md">
+              <ChefHat className="h-4 w-4" /> Build My Own Bowl
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Corporate orders */}
+      <section className="mx-auto max-w-6xl px-4 pb-12">
+        <div className="flex flex-col items-center gap-4 rounded-3xl border p-6 text-center md:flex-row md:justify-between md:p-8 md:text-left" style={{ background: "var(--color-cream)" }}>
+          <div className="flex items-start gap-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <Users className="h-6 w-6" />
+            </div>
+            <div>
+              <h2 className="font-display text-xl md:text-2xl font-bold">Healthy Meals for Your Whole Team</h2>
+              <p className="mt-1 max-w-md text-sm text-muted-foreground">Breakfast, lunch & full-day corporate meal plans for offices. Tell us your team size and we'll tailor a plan.</p>
+            </div>
+          </div>
+          <a href={`https://wa.me/${whatsapp}?text=${corporatePrefill}`} target="_blank" rel="noopener noreferrer"
+            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:shadow-md">
+            Enquire for Corporate <ArrowRight className="h-4 w-4" />
+          </a>
+        </div>
+      </section>
 
       {/* Testimonials */}
       <section className="py-12 md:py-14" style={{ background: "var(--color-cream)" }}>
         <div className="mx-auto max-w-6xl px-4">
-          <div className="text-center">
+          <Reveal className="text-center">
             <h2 className="font-display text-2xl md:text-3xl font-bold">Loved by Our Customers</h2>
             <p className="mt-2 text-sm text-muted-foreground">Real food, real results — here's what they say.</p>
-          </div>
+          </Reveal>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="rounded-2xl border bg-card p-5 shadow-[var(--shadow-card)]">
+            {TESTIMONIALS.map((t, i) => (
+              <Reveal key={t.name} delay={i * 80} className="rounded-2xl border bg-card p-5 shadow-[var(--shadow-card)]">
                 <div className="flex gap-0.5 text-[var(--color-saffron)]">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-current" />
@@ -200,7 +343,7 @@ function Home() {
                     <div className="text-xs text-muted-foreground">{t.tag}</div>
                   </div>
                 </div>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -209,7 +352,7 @@ function Home() {
       {/* Contact / questions */}
       <section className="bg-secondary/30 py-12 border-t">
         <div className="mx-auto max-w-3xl px-4 text-center">
-          <h2 className="font-display text-2xl md:text-3xl font-bold">Questions? Talk to us</h2>
+          <h2 className="font-display text-2xl md:text-3xl font-bold">Questions? Talk to Us</h2>
           <p className="mt-2 text-sm text-muted-foreground">We're happy to help with plans, delivery, dietary preferences, or anything else.</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <a

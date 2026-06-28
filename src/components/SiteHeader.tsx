@@ -28,7 +28,7 @@ export function SiteHeader() {
   );
 
   return (
-    <header className="border-b bg-background/80 backdrop-blur sticky top-0 z-40">
+    <header className="sticky top-0 z-40 border-b bg-background/70 backdrop-blur-lg supports-[backdrop-filter]:bg-background/55">
       {/*
         Mobile: stacked rows -> 1) logo  2) account utilities  3) primary nav buttons
         Desktop: one tidy row  -> logo | primary nav | account utilities (right)
