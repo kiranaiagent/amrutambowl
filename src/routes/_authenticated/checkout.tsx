@@ -430,8 +430,17 @@ function Checkout() {
       await supabase.from("order_items").insert(rows);
       return { kind: "bowl" as const, id: ord.id, firstOrderId: ord.id };
     },
-    onSuccess: (r) => {
+    onSuccess: async (r) => {
       toast.success("Order placed! 🎉");
+      // Record promo redemption (trigger enforces caps & bumps counter)
+      if (promo && user) {
+        await supabase.from("promo_redemptions").insert({
+          promo_code_id: promo.id, user_id: user.id,
+          subscription_id: r.kind === "subscription" ? r.id : null,
+          order_id: r.firstOrderId ?? r.id,
+          discount_inr: discount,
+        }).then(({ error }) => { if (error) console.warn("Promo redemption:", error.message); });
+      }
       if (r.kind === "bowl") clear();
       try { sessionStorage.removeItem(OVERRIDE_KEY); sessionStorage.removeItem(BOWL_KEY); } catch {}
       if (user) supabase.from("profiles").update({ pincode, phone: phone || undefined, name: name || undefined }).eq("id", user.id);
