@@ -636,12 +636,41 @@ function Checkout() {
             </>
           )}
 
+          {/* Promo code */}
+          <div className="border-t pt-3">
+            <Label className="flex items-center gap-1"><Tag className="h-3.5 w-3.5" /> Promo code</Label>
+            {promo ? (
+              <div className="mt-1 flex items-center justify-between rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
+                <div className="text-sm">
+                  <span className="font-mono font-bold text-primary">{promo.code}</span>
+                  <span className="text-muted-foreground"> applied · −₹{discount.toFixed(0)}</span>
+                </div>
+                <button type="button" onClick={() => { setPromo(null); setPromoInput(""); }}
+                  className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+              </div>
+            ) : (
+              <div className="mt-1 flex gap-2">
+                <Input value={promoInput} onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                  placeholder="e.g. WELCOME10" />
+                <Button type="button" variant="outline" disabled={promoBusy || !promoInput.trim()}
+                  onClick={() => applyPromo(promoInput)}>
+                  {promoBusy ? "…" : "Apply"}
+                </Button>
+              </div>
+            )}
+          </div>
+
           <div className="border-t pt-3 space-y-1 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">{isBowl ? "Custom bowl" : isPlan ? `Plan (${planSelectedDates.length} deliveries)` : "Bowl"}</span>
               <span>₹{baseSubtotal.toFixed(0)}</span>
             </div>
             {addonsSubtotal > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Extras</span><span>₹{addonsSubtotal.toFixed(0)}</span></div>}
+            {discount > 0 && (
+              <div className="flex justify-between text-primary">
+                <span>Discount ({promo?.code})</span><span>−₹{discount.toFixed(0)}</span>
+              </div>
+            )}
             <div className="flex justify-between"><span className="text-muted-foreground">GST (5%)</span><span>₹{gst.toFixed(0)}</span></div>
             <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2"><span>Total</span><span>₹{grand.toFixed(0)}</span></div>
           </div>
