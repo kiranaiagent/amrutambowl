@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, ChefHat, Dumbbell, BadgePercent, Leaf, Wheat, Flame } from "lucide-react";
 import { BuildBowlCard } from "@/components/BuildBowlCard";
+import { Reveal } from "@/components/Reveal";
 import { planMeta, type PlanMeta } from "@/lib/planValue";
 
 const CYCLE_SUFFIX: Record<string, string> = {
@@ -87,18 +88,17 @@ function PlansPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 md:py-8">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Macro-Balanced · Chef-Crafted</span>
-            <h1 className="mt-2.5 font-display text-2xl md:text-3xl font-bold tracking-tight">Bowl Plans for Every Goal</h1>
-            <p className="text-sm text-muted-foreground mt-1.5 max-w-xl">Ready-made, nutritionist-designed plans — subscribe in a tap, or <Link to="/bowl" className="inline-flex items-center gap-1 align-bottom text-primary font-medium underline underline-offset-2"><ChefHat className="h-4 w-4" /> Build My Own Bowl</Link>.</p>
-          </div>
-        </div>
+      <main className="relative mx-auto w-full max-w-6xl flex-1 px-4 py-6 md:py-8">
+        <div aria-hidden className="pointer-events-none absolute -top-10 right-0 -z-10 h-56 w-72 rounded-full opacity-30 blur-3xl" style={{ background: "var(--color-saffron)" }} />
+        <Reveal>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Macro-Balanced · Chef-Crafted</span>
+          <h1 className="mt-2.5 font-display text-2xl md:text-3xl font-bold tracking-tight">Bowl Plans for Every Goal</h1>
+          <p className="text-sm text-muted-foreground mt-1.5 max-w-xl">Ready-made, nutritionist-designed plans — subscribe in a tap, or <Link to="/bowl" className="inline-flex items-center gap-1 align-bottom text-primary font-medium underline underline-offset-2"><ChefHat className="h-4 w-4" /> Build My Own Bowl</Link>.</p>
+        </Reveal>
 
         {/* Goal finder + dietary/health filters */}
         {plans.length > 0 && (
-          <div className="mt-5 space-y-3">
+          <Reveal className="mt-5 space-y-3 rounded-2xl border bg-card/70 p-4 shadow-sm backdrop-blur">
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">What's your goal?</div>
               <div className="flex flex-wrap gap-2">
@@ -130,7 +130,10 @@ function PlansPage() {
                 )}
               </div>
             </div>
-          </div>
+            <div className="border-t pt-2.5 text-xs text-muted-foreground">
+              Showing <span className="font-semibold text-foreground">{visible.length}</span> of {plans.length} plan{plans.length === 1 ? "" : "s"}
+            </div>
+          </Reveal>
         )}
 
         {plansQ.isLoading && <div className="mt-6 text-muted-foreground">Loading…</div>}
@@ -144,12 +147,13 @@ function PlansPage() {
         )}
 
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
-          {visible.map((p: any) => {
+          {visible.map((p: any, i: number) => {
             const items = (p.plan_items ?? []).map((pi: any) => pi.menu_items).filter((m: any) => m);
             const uniq = Array.from(new Map(items.map((m: any) => [m.id, m])).values()) as any[];
             const meta = metas.get(p.id)!;
             return (
-              <Link key={p.id} to="/plans/$id" params={{ id: p.id }} className="group block">
+              <Reveal key={p.id} delay={i * 60} className="h-full">
+                <Link to="/plans/$id" params={{ id: p.id }} className="group block h-full">
                 <Card className="relative overflow-hidden flex flex-col h-full transition hover:-translate-y-1 hover:shadow-[var(--shadow-soft)]">
                   {p.is_popular && (
                     <div className="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-[var(--color-saffron)] px-2.5 py-1 text-[11px] font-bold text-[var(--color-saffron-foreground)] shadow">
@@ -227,7 +231,8 @@ function PlansPage() {
                     </div>
                   </div>
                 </Card>
-              </Link>
+                </Link>
+              </Reveal>
             );
           })}
         </div>
