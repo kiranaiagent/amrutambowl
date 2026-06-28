@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useCart } from "@/lib/cart";
 import { toast } from "sonner";
-import { CheckCircle2, Minus, Plus as PlusIcon, MapPin } from "lucide-react";
+import { CheckCircle2, Minus, Plus as PlusIcon, MapPin, Tag, X } from "lucide-react";
 import { MealImage } from "@/components/MealImage";
 
 type Search = { plan?: string; bowl?: string };
@@ -85,6 +85,11 @@ function Checkout() {
   const [notes, setNotes] = useState("");
   const [addonQty, setAddonQty] = useState<Record<string, number>>({});
   const [planOverrides, setPlanOverrides] = useState<Override[]>([]);
+
+  // Promo code
+  const [promoInput, setPromoInput] = useState("");
+  const [promo, setPromo] = useState<{ id: string; code: string; discount: number } | null>(null);
+  const [promoBusy, setPromoBusy] = useState(false);
 
   useEffect(() => {
     try {
@@ -217,8 +222,39 @@ function Checkout() {
   }, [addonsQ.data, addonQty, isPlan, isBowl, deliveriesCount]);
 
   const subTotal = baseSubtotal + addonsSubtotal;
-  const gst = subTotal * 0.05;
-  const grand = subTotal + gst;
+  const discount = promo ? Math.min(promo.discount, subTotal) : 0;
+  const taxable = Math.max(0, subTotal - discount);
+  const gst = taxable * 0.05;
+  const grand = taxable + gst;
+
+  // Re-validate promo whenever subtotal or source changes
+  useEffect(() => {
+    if (!promo) return;
+    if (subTotal <= 0) { setPromo(null); return; }
+    applyPromo(promo.code, true).catch(() => setPromo(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subTotal, isPlan, isBowl]);
+
+  async function applyPromo(code: string, silent = false) {
+    if (!user) { toast.info("Sign in to use a promo code"); return; }
+    const c = code.trim().toUpperCase();
+    if (!c) return;
+    setPromoBusy(true);
+    try {
+      const source = isBowl ? "bowl" : isPlan ? "plan" : "bowl";
+      const { data, error } = await supabase.rpc("validate_promo" as any, {
+        _code: c, _user_id: user.id, _subtotal: subTotal, _source: source,
+      } as any);
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row?.promo_id || row?.reason) throw new Error(row?.reason || "Invalid code");
+      setPromo({ id: row.promo_id, code: c, discount: Number(row.discount_inr) });
+      if (!silent) toast.success(`${c} applied — ₹${Number(row.discount_inr).toFixed(0)} off`);
+    } catch (e: any) {
+      if (!silent) toast.error(e.message);
+      setPromo(null);
+    } finally { setPromoBusy(false); }
+  }
 
   const toggleAllergen = (a: string) =>
     setAvoidAllergens((cur) => (cur.includes(a) ? cur.filter((x) => x !== a) : [...cur, a]));
