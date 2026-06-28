@@ -25,6 +25,7 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedAdminSubscriptionsRouteImport } from './routes/_authenticated/admin/subscriptions'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
+import { Route as AuthenticatedAdminPromosRouteImport } from './routes/_authenticated/admin/promos'
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
 import { Route as AuthenticatedAdminPincodesRouteImport } from './routes/_authenticated/admin/pincodes'
 import { Route as AuthenticatedAdminPincodeRequestsRouteImport } from './routes/_authenticated/admin/pincode-requests'
@@ -113,6 +114,12 @@ const AuthenticatedAdminSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminPromosRoute =
+  AuthenticatedAdminPromosRouteImport.update({
+    id: '/promos',
+    path: '/promos',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminPlansRoute = AuthenticatedAdminPlansRouteImport.update({
   id: '/plans',
   path: '/plans',
@@ -159,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/admin/pincode-requests': typeof AuthenticatedAdminPincodeRequestsRoute
   '/admin/pincodes': typeof AuthenticatedAdminPincodesRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
+  '/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -180,6 +188,7 @@ export interface FileRoutesByTo {
   '/admin/pincode-requests': typeof AuthenticatedAdminPincodeRequestsRoute
   '/admin/pincodes': typeof AuthenticatedAdminPincodesRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
+  '/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -204,6 +213,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/pincode-requests': typeof AuthenticatedAdminPincodeRequestsRoute
   '/_authenticated/admin/pincodes': typeof AuthenticatedAdminPincodesRoute
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRoute
+  '/_authenticated/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -228,6 +238,7 @@ export interface FileRouteTypes {
     | '/admin/pincode-requests'
     | '/admin/pincodes'
     | '/admin/plans'
+    | '/admin/promos'
     | '/admin/settings'
     | '/admin/subscriptions'
     | '/admin/users'
@@ -249,6 +260,7 @@ export interface FileRouteTypes {
     | '/admin/pincode-requests'
     | '/admin/pincodes'
     | '/admin/plans'
+    | '/admin/promos'
     | '/admin/settings'
     | '/admin/subscriptions'
     | '/admin/users'
@@ -272,6 +284,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/pincode-requests'
     | '/_authenticated/admin/pincodes'
     | '/_authenticated/admin/plans'
+    | '/_authenticated/admin/promos'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/subscriptions'
     | '/_authenticated/admin/users'
@@ -403,6 +416,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/promos': {
+      id: '/_authenticated/admin/promos'
+      path: '/promos'
+      fullPath: '/admin/promos'
+      preLoaderRoute: typeof AuthenticatedAdminPromosRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/plans': {
       id: '/_authenticated/admin/plans'
       path: '/plans'
@@ -447,6 +467,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminPincodeRequestsRoute: typeof AuthenticatedAdminPincodeRequestsRoute
   AuthenticatedAdminPincodesRoute: typeof AuthenticatedAdminPincodesRoute
   AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRoute
+  AuthenticatedAdminPromosRoute: typeof AuthenticatedAdminPromosRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminSubscriptionsRoute: typeof AuthenticatedAdminSubscriptionsRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
@@ -460,6 +481,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
     AuthenticatedAdminPincodeRequestsRoute,
   AuthenticatedAdminPincodesRoute: AuthenticatedAdminPincodesRoute,
   AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRoute,
+  AuthenticatedAdminPromosRoute: AuthenticatedAdminPromosRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminSubscriptionsRoute: AuthenticatedAdminSubscriptionsRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
@@ -499,13 +521,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

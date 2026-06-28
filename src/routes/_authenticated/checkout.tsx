@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useCart } from "@/lib/cart";
 import { toast } from "sonner";
-import { CheckCircle2, Minus, Plus as PlusIcon, MapPin } from "lucide-react";
+import { CheckCircle2, Minus, Plus as PlusIcon, MapPin, Tag, X } from "lucide-react";
 import { MealImage } from "@/components/MealImage";
 
 type Search = { plan?: string; bowl?: string };
@@ -85,6 +85,11 @@ function Checkout() {
   const [notes, setNotes] = useState("");
   const [addonQty, setAddonQty] = useState<Record<string, number>>({});
   const [planOverrides, setPlanOverrides] = useState<Override[]>([]);
+
+  // Promo code
+  const [promoInput, setPromoInput] = useState("");
+  const [promo, setPromo] = useState<{ id: string; code: string; discount: number } | null>(null);
+  const [promoBusy, setPromoBusy] = useState(false);
 
   useEffect(() => {
     try {
@@ -217,8 +222,39 @@ function Checkout() {
   }, [addonsQ.data, addonQty, isPlan, isBowl, deliveriesCount]);
 
   const subTotal = baseSubtotal + addonsSubtotal;
-  const gst = subTotal * 0.05;
-  const grand = subTotal + gst;
+  const discount = promo ? Math.min(promo.discount, subTotal) : 0;
+  const taxable = Math.max(0, subTotal - discount);
+  const gst = taxable * 0.05;
+  const grand = taxable + gst;
+
+  // Re-validate promo whenever subtotal or source changes
+  useEffect(() => {
+    if (!promo) return;
+    if (subTotal <= 0) { setPromo(null); return; }
+    applyPromo(promo.code, true).catch(() => setPromo(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subTotal, isPlan, isBowl]);
+
+  async function applyPromo(code: string, silent = false) {
+    if (!user) { toast.info("Sign in to use a promo code"); return; }
+    const c = code.trim().toUpperCase();
+    if (!c) return;
+    setPromoBusy(true);
+    try {
+      const source = isBowl ? "bowl" : isPlan ? "plan" : "bowl";
+      const { data, error } = await supabase.rpc("validate_promo" as any, {
+        _code: c, _user_id: user.id, _subtotal: subTotal, _source: source,
+      } as any);
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row?.promo_id || row?.reason) throw new Error(row?.reason || "Invalid code");
+      setPromo({ id: row.promo_id, code: c, discount: Number(row.discount_inr) });
+      if (!silent) toast.success(`${c} applied — ₹${Number(row.discount_inr).toFixed(0)} off`);
+    } catch (e: any) {
+      if (!silent) toast.error(e.message);
+      setPromo(null);
+    } finally { setPromoBusy(false); }
+  }
 
   const toggleAllergen = (a: string) =>
     setAvoidAllergens((cur) => (cur.includes(a) ? cur.filter((x) => x !== a) : [...cur, a]));
@@ -394,8 +430,17 @@ function Checkout() {
       await supabase.from("order_items").insert(rows);
       return { kind: "bowl" as const, id: ord.id, firstOrderId: ord.id };
     },
-    onSuccess: (r) => {
+    onSuccess: async (r) => {
       toast.success("Order placed! 🎉");
+      // Record promo redemption (trigger enforces caps & bumps counter)
+      if (promo && user) {
+        await supabase.from("promo_redemptions").insert({
+          promo_code_id: promo.id, user_id: user.id,
+          subscription_id: r.kind === "subscription" ? r.id : null,
+          order_id: r.firstOrderId ?? r.id,
+          discount_inr: discount,
+        }).then(({ error }) => { if (error) console.warn("Promo redemption:", error.message); });
+      }
       if (r.kind === "bowl") clear();
       try { sessionStorage.removeItem(OVERRIDE_KEY); sessionStorage.removeItem(BOWL_KEY); } catch {}
       if (user) supabase.from("profiles").update({ pincode, phone: phone || undefined, name: name || undefined }).eq("id", user.id);
@@ -591,12 +636,41 @@ function Checkout() {
             </>
           )}
 
+          {/* Promo code */}
+          <div className="border-t pt-3">
+            <Label className="flex items-center gap-1"><Tag className="h-3.5 w-3.5" /> Promo code</Label>
+            {promo ? (
+              <div className="mt-1 flex items-center justify-between rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
+                <div className="text-sm">
+                  <span className="font-mono font-bold text-primary">{promo.code}</span>
+                  <span className="text-muted-foreground"> applied · −₹{discount.toFixed(0)}</span>
+                </div>
+                <button type="button" onClick={() => { setPromo(null); setPromoInput(""); }}
+                  className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+              </div>
+            ) : (
+              <div className="mt-1 flex gap-2">
+                <Input value={promoInput} onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                  placeholder="e.g. WELCOME10" />
+                <Button type="button" variant="outline" disabled={promoBusy || !promoInput.trim()}
+                  onClick={() => applyPromo(promoInput)}>
+                  {promoBusy ? "…" : "Apply"}
+                </Button>
+              </div>
+            )}
+          </div>
+
           <div className="border-t pt-3 space-y-1 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">{isBowl ? "Custom bowl" : isPlan ? `Plan (${planSelectedDates.length} deliveries)` : "Bowl"}</span>
               <span>₹{baseSubtotal.toFixed(0)}</span>
             </div>
             {addonsSubtotal > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Extras</span><span>₹{addonsSubtotal.toFixed(0)}</span></div>}
+            {discount > 0 && (
+              <div className="flex justify-between text-primary">
+                <span>Discount ({promo?.code})</span><span>−₹{discount.toFixed(0)}</span>
+              </div>
+            )}
             <div className="flex justify-between"><span className="text-muted-foreground">GST (5%)</span><span>₹{gst.toFixed(0)}</span></div>
             <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2"><span>Total</span><span>₹{grand.toFixed(0)}</span></div>
           </div>

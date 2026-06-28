@@ -69,7 +69,7 @@ function PlansPage() {
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Macro-Balanced · Chef-Crafted</span>
-            <h1 className="mt-2.5 font-display text-2xl md:text-4xl font-semibold tracking-tight">Bowl Plans for Every Goal</h1>
+            <h1 className="mt-2.5 font-display text-2xl md:text-3xl font-bold tracking-tight">Bowl Plans for Every Goal</h1>
             <p className="text-sm text-muted-foreground mt-1.5 max-w-xl">Ready-made, nutritionist-designed plans — subscribe in a tap, or <Link to="/bowl" className="inline-flex items-center gap-1 align-bottom text-primary font-medium underline underline-offset-2"><ChefHat className="h-4 w-4" /> Build My Own Bowl</Link>.</p>
           </div>
         </div>
