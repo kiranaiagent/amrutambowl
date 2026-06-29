@@ -56,6 +56,7 @@ const TAG_OPTIONS = ["keto", "high-protein", "low-carb", "gluten-free"];
 function emptyItem(): Partial<Item> {
   return {
     name: "", description: "", price_inr: 0, calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0,
+    glycemic_index: null, sodium_mg: null,
     food_type: "veg", allergens: [], tags: [], meal_type: "lunch", serving_size: "",
     is_available: true, status: "active", image_url: "",
   };
