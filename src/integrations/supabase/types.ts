@@ -25,6 +25,7 @@ export type Database = {
           fat_g: number
           fiber_g: number
           food_type: Database["public"]["Enums"]["food_type"]
+          glycemic_index: number | null
           id: string
           image_url: string | null
           is_active: boolean
@@ -34,6 +35,7 @@ export type Database = {
           price_inr: number
           protein_g: number
           serving_size: string | null
+          sodium_mg: number | null
           status: Database["public"]["Enums"]["content_status"]
           tags: string[] | null
           updated_at: string
@@ -48,6 +50,7 @@ export type Database = {
           fat_g?: number
           fiber_g?: number
           food_type?: Database["public"]["Enums"]["food_type"]
+          glycemic_index?: number | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -57,6 +60,7 @@ export type Database = {
           price_inr?: number
           protein_g?: number
           serving_size?: string | null
+          sodium_mg?: number | null
           status?: Database["public"]["Enums"]["content_status"]
           tags?: string[] | null
           updated_at?: string
@@ -71,6 +75,7 @@ export type Database = {
           fat_g?: number
           fiber_g?: number
           food_type?: Database["public"]["Enums"]["food_type"]
+          glycemic_index?: number | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -80,6 +85,7 @@ export type Database = {
           price_inr?: number
           protein_g?: number
           serving_size?: string | null
+          sodium_mg?: number | null
           status?: Database["public"]["Enums"]["content_status"]
           tags?: string[] | null
           updated_at?: string
@@ -340,6 +346,7 @@ export type Database = {
           start_date: string | null
           start_day_of_week: number | null
           status: Database["public"]["Enums"]["content_status"]
+          tags: string[]
           updated_at: string
         }
         Insert: {
@@ -360,6 +367,7 @@ export type Database = {
           start_date?: string | null
           start_day_of_week?: number | null
           status?: Database["public"]["Enums"]["content_status"]
+          tags?: string[]
           updated_at?: string
         }
         Update: {
@@ -380,6 +388,7 @@ export type Database = {
           start_date?: string | null
           start_day_of_week?: number | null
           status?: Database["public"]["Enums"]["content_status"]
+          tags?: string[]
           updated_at?: string
         }
         Relationships: []

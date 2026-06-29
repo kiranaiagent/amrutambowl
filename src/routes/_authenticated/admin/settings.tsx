@@ -26,6 +26,7 @@ function SettingsPage() {
     whatsapp_number: "",
     phone_number: "",
     whatsapp_prefill: "",
+    medical_disclaimer: "",
   });
 
   useEffect(() => {
@@ -41,6 +42,7 @@ function SettingsPage() {
       { key: "whatsapp_number", value: form.whatsapp_number.replace(/\s/g, "") },
       { key: "phone_number", value: form.phone_number.replace(/\s/g, "") },
       { key: "whatsapp_prefill", value: form.whatsapp_prefill },
+      { key: "medical_disclaimer", value: form.medical_disclaimer },
     ];
     const { error } = await supabase.from("site_settings").upsert(rows, { onConflict: "key" });
     setSaving(false);
@@ -118,6 +120,20 @@ function SettingsPage() {
                 Message that appears automatically when a customer taps the WhatsApp button.
               </p>
             </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="medical_disclaimer">Medical Disclaimer</Label>
+              <Textarea
+                id="medical_disclaimer"
+                value={form.medical_disclaimer || current.medical_disclaimer}
+                onChange={(e) => setForm((f) => ({ ...f, medical_disclaimer: e.target.value }))}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">
+                Shown on plans tagged with health conditions (low-gi, diabetic-friendly, pcos-friendly, heart-healthy).
+              </p>
+            </div>
+
 
             <Button type="submit" disabled={saving} className="w-full sm:w-auto">
               <Save className="h-4 w-4 mr-2" />

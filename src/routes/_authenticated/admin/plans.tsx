@@ -39,6 +39,7 @@ type Plan = {
   start_day_of_week: number | null;
   start_date: string | null;
   delivery_days: number[];
+  tags: string[];
 };
 
 export const Route = createFileRoute("/_authenticated/admin/plans")({
@@ -48,6 +49,11 @@ export const Route = createFileRoute("/_authenticated/admin/plans")({
 const GOALS = ["weight-loss", "muscle-gain", "balanced", "keto"] as const;
 const CYCLES: Cycle[] = ["daily", "weekly", "biweekly", "monthly"];
 const CYCLE_DEFAULTS: Record<Cycle, number> = { daily: 1, weekly: 7, biweekly: 14, monthly: 28 };
+const TAG_OPTIONS = [
+  "low-gi", "diabetic-friendly", "student-tiffin", "high-protein", "low-calorie",
+  "high-fibre", "heart-healthy", "pcos-friendly", "gut-health", "office-lunch",
+  "kids", "vegan", "millet", "sattvik",
+];
 const WEEKDAYS = [
   { v: 0, label: "Sun" },
   { v: 1, label: "Mon" },
@@ -63,6 +69,7 @@ function emptyPlan(): Partial<Plan> {
     name: "", description: "", goal_type: "balanced", meals_per_day: 2, days_per_week: 5,
     billing_cycle: "weekly", price_inr: 0, status: "active", image_url: "",
     duration_days: 7, delivery_days: [1, 2, 3, 4, 5], start_day_of_week: 1, start_date: null,
+    tags: [],
   };
 }
 
@@ -280,6 +287,39 @@ function PlansPage() {
                 <Checkbox id="is_popular" checked={!!(editing as any)?.is_popular}
                   onCheckedChange={(v) => setEditing({ ...editing, is_popular: !!v } as any)} />
                 <Label htmlFor="is_popular" className="cursor-pointer">Mark as Popular (shown in Build-a-Bowl & top of Plans)</Label>
+              </div>
+              <div className="md:col-span-2 space-y-2">
+                <Label>Tags / Collections</Label>
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(new Set([...TAG_OPTIONS, ...(editing?.tags ?? [])])).map((t) => {
+                    const on = (editing?.tags ?? []).includes(t);
+                    return (
+                      <button key={t} type="button"
+                        onClick={() => {
+                          const cur = new Set(editing?.tags ?? []);
+                          cur.has(t) ? cur.delete(t) : cur.add(t);
+                          setEditing({ ...editing, tags: [...cur] });
+                        }}
+                        className={`rounded-full border px-3 py-1 text-xs ${on ? "bg-primary text-primary-foreground border-primary" : "bg-secondary"}`}>
+                        {t}
+                      </button>
+                    );
+                  })}
+                </div>
+                <Input
+                  placeholder="Add a custom tag and press Enter"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const v = (e.target as HTMLInputElement).value.trim().toLowerCase().replace(/\s+/g, "-");
+                      if (!v) return;
+                      const cur = new Set(editing?.tags ?? []);
+                      cur.add(v);
+                      setEditing({ ...editing, tags: [...cur] });
+                      (e.target as HTMLInputElement).value = "";
+                    }
+                  }}
+                />
               </div>
             </div>
             <DialogFooter>
