@@ -4,14 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Footer } from "@/components/Footer";
 import { MealImage } from "@/components/MealImage";
-import { Card } from "@/components/ui/card";
+import { PlanCard } from "@/components/PlanCard";
 import {
   Phone, ChefHat, Dumbbell, Star, Salad, Flame, Leaf,
   Users, ArrowRight, Plus, Target,
 } from "lucide-react";
 import { BuildBowlCard } from "@/components/BuildBowlCard";
 import { Reveal } from "@/components/Reveal";
-import { planMeta } from "@/lib/planValue";
 import { useSiteSettings } from "@/lib/settings";
 
 const TESTIMONIALS = [
@@ -36,11 +35,6 @@ export const Route = createFileRoute("/")({
   }),
   component: Home,
 });
-
-const CYCLE_SUFFIX: Record<string, string> = {
-  daily: "day", weekly: "week", biweekly: "2 wks", monthly: "month", custom_dates: "plan",
-};
-const cycleSuffix = (c: string) => CYCLE_SUFFIX[c] ?? c;
 
 function Home() {
   const { data: settings } = useSiteSettings();
@@ -137,50 +131,11 @@ function Home() {
                     </div>
                   </div>
                 ))
-              : plans.data?.map((p: any, i: number) => {
-              const items = Array.from(new Map(((p.plan_items ?? [])
-                .map((pi: any) => pi.menu_items).filter((m: any) => m))
-                .map((m: any) => [m.id, m])).values()) as any[];
-              const meta = planMeta(p);
-              const ingredients = items.map((m: any) => m.name).join(" · ");
-              const cals = items.map((m: any) => Number(m.calories)).filter((n: number) => n > 0);
-              const avgCal = cals.length ? Math.round(cals.reduce((a: number, b: number) => a + b, 0) / cals.length) : 0;
-              return (
-                <Reveal key={p.id} delay={i * 70} className="h-full">
-                  <Link to="/plans/$id" params={{ id: p.id }} className="group block h-full">
-                  <Card className="overflow-hidden rounded-2xl border shadow-sm transition hover:-translate-y-1 hover:shadow-lg h-full flex flex-col">
-                    <div className="relative">
-                      <MealImage path={p.image_url} alt={p.name} className="h-56 w-full object-cover" />
-                      {p.is_popular ? (
-                        <span className="absolute left-2.5 top-2.5 rounded-full bg-[var(--color-saffron)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--color-saffron-foreground)] shadow">Popular</span>
-                      ) : (
-                        <span className="absolute left-2.5 top-2.5 rounded-full bg-primary px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary-foreground shadow capitalize">{String(p.goal_type).replace("-", " ")}</span>
-                      )}
-                      <span className="absolute right-2.5 top-2.5 rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground shadow">₹{Number(p.price_inr).toFixed(0)}<span className="font-normal opacity-80">/{cycleSuffix(p.billing_cycle)}</span></span>
-                    </div>
-                    <div className="p-3.5 flex-1 flex flex-col gap-2.5">
-                      <h3 className="font-semibold leading-tight line-clamp-1">{p.name}</h3>
-                      {ingredients && (
-                        <p className="text-xs leading-snug text-muted-foreground line-clamp-2">{ingredients}</p>
-                      )}
-                      <div className="flex flex-wrap gap-1.5">
-                        {avgCal > 0 && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground"><Flame className="h-3 w-3 text-[var(--color-terracotta)]" /> ~{avgCal} kcal</span>
-                        )}
-                        {meta.avgProtein > 0 && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary"><Dumbbell className="h-3 w-3" /> ~{meta.avgProtein}g protein</span>
-                        )}
-                        <span className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground">{p.meals_per_day} meal{p.meals_per_day === 1 ? "" : "s"}/day</span>
-                      </div>
-                      <span className="mt-auto flex items-center justify-center gap-1 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition group-hover:shadow-md">
-                        View Plan
-                      </span>
-                    </div>
-                  </Card>
-                  </Link>
-                </Reveal>
-              );
-            })}
+              : plans.data?.map((p: any, i: number) => (
+                  <Reveal key={p.id} delay={i * 70} className="h-full">
+                    <PlanCard p={p} />
+                  </Reveal>
+                ))}
           </div>
         </section>
       )}

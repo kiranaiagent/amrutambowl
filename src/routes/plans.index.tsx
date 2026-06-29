@@ -4,18 +4,12 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Footer } from "@/components/Footer";
-import { MealImage } from "@/components/MealImage";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Sparkles, ChefHat, Dumbbell, BadgePercent, Leaf, Wheat, Flame } from "lucide-react";
+import { PlanCard } from "@/components/PlanCard";
+import { ChefHat, Dumbbell, Leaf, Wheat, Flame, Wallet, Salad } from "lucide-react";
 import { BuildBowlCard } from "@/components/BuildBowlCard";
 import { Reveal } from "@/components/Reveal";
 import { planMeta, type PlanMeta } from "@/lib/planValue";
-
-const CYCLE_SUFFIX: Record<string, string> = {
-  daily: "day", weekly: "week", biweekly: "2 wks", monthly: "month", custom_dates: "plan",
-};
-const cycleSuffix = (c: string) => CYCLE_SUFFIX[c] ?? c;
 
 const GOALS = [
   { v: "all", label: "All" },
@@ -33,6 +27,16 @@ const FACETS: { v: string; label: string; Icon: any; test: (m: PlanMeta) => bool
   { v: "lowCalorie", label: "Low Calorie", Icon: Flame, test: (m) => m.lowCalorie },
 ];
 
+// Curated collections — marketing-friendly groupings, derived from existing data.
+const BUDGET_PER_MEAL = 250; // ₹/meal threshold for value picks
+const COLLECTIONS: { v: string; label: string; Icon: any; test: (p: any, m: PlanMeta) => boolean }[] = [
+  { v: "protein", label: "Protein Packs", Icon: Dumbbell, test: (_p, m) => m.highProtein },
+  { v: "light", label: "Light & High-Fibre", Icon: Wheat, test: (_p, m) => m.lowCalorie && m.highFiber },
+  { v: "veg", label: "Pure Veg", Icon: Leaf, test: (_p, m) => m.pureVeg },
+  { v: "budget", label: "Budget Picks", Icon: Wallet, test: (_p, m) => m.perMeal > 0 && m.perMeal <= BUDGET_PER_MEAL },
+  { v: "keto", label: "Keto-Friendly", Icon: Salad, test: (p) => p.goal_type === "keto" },
+];
+
 export const Route = createFileRoute("/plans/")({
   validateSearch: (s: Record<string, unknown>) => ({ goal: typeof s.goal === "string" ? s.goal : undefined }),
   head: () => ({
@@ -48,6 +52,7 @@ export const Route = createFileRoute("/plans/")({
 function PlansPage() {
   const { goal: goalParam } = Route.useSearch();
   const [goal, setGoal] = useState(goalParam ?? "all");
+  const [collection, setCollection] = useState<string | null>(null);
   const [facets, setFacets] = useState<Set<string>>(new Set());
   const toggleFacet = (v: string) =>
     setFacets((cur) => {
@@ -79,9 +84,11 @@ function PlansPage() {
   }
 
   const activeFacets = FACETS.filter((f) => facets.has(f.v));
+  const activeCollection = COLLECTIONS.find((c) => c.v === collection) ?? null;
   const visible = plans.filter((p) => {
     if (goal !== "all" && p.goal_type !== goal) return false;
     const m = metas.get(p.id)!;
+    if (activeCollection && !activeCollection.test(p, m)) return false;
     return activeFacets.every((f) => f.test(m));
   });
 
@@ -99,6 +106,20 @@ function PlansPage() {
         {/* Goal finder + dietary/health filters */}
         {plans.length > 0 && (
           <Reveal className="mt-5 space-y-3 rounded-2xl border bg-card/70 p-4 shadow-sm backdrop-blur">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Collections</div>
+              <div className="flex flex-wrap gap-2">
+                {COLLECTIONS.map((c) => {
+                  const on = collection === c.v;
+                  return (
+                    <button key={c.v} type="button" onClick={() => setCollection(on ? null : c.v)}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition ${on ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-primary/5 border-primary/20 text-primary hover:bg-primary/10"}`}>
+                      <c.Icon className="h-4 w-4" /> {c.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">What's your goal?</div>
               <div className="flex flex-wrap gap-2">
@@ -122,8 +143,8 @@ function PlansPage() {
                     </button>
                   );
                 })}
-                {(facets.size > 0 || goal !== "all") && (
-                  <button type="button" onClick={() => { setFacets(new Set()); setGoal("all"); }}
+                {(facets.size > 0 || goal !== "all" || collection) && (
+                  <button type="button" onClick={() => { setFacets(new Set()); setGoal("all"); setCollection(null); }}
                     className="rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground">
                     Clear
                   </button>
@@ -147,94 +168,11 @@ function PlansPage() {
         )}
 
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
-          {visible.map((p: any, i: number) => {
-            const items = (p.plan_items ?? []).map((pi: any) => pi.menu_items).filter((m: any) => m);
-            const uniq = Array.from(new Map(items.map((m: any) => [m.id, m])).values()) as any[];
-            const meta = metas.get(p.id)!;
-            return (
-              <Reveal key={p.id} delay={i * 60} className="h-full">
-                <Link to="/plans/$id" params={{ id: p.id }} className="group block h-full">
-                <Card className="relative overflow-hidden flex flex-col h-full transition hover:-translate-y-1 hover:shadow-[var(--shadow-soft)]">
-                  {p.is_popular && (
-                    <div className="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-[var(--color-saffron)] px-2.5 py-1 text-[11px] font-bold text-[var(--color-saffron-foreground)] shadow">
-                      <Sparkles className="h-3 w-3" /> Popular
-                    </div>
-                  )}
-                  {bestValueId === p.id && (
-                    <div className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-primary-foreground shadow">
-                      <BadgePercent className="h-3 w-3" /> Best Value
-                    </div>
-                  )}
-                  <div className="relative overflow-hidden">
-                    <MealImage path={p.image_url} alt={p.name} className="h-48 w-full object-cover transition duration-500 group-hover:scale-105" />
-                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/45 to-transparent" />
-                    <div className="absolute bottom-2.5 left-3 flex gap-1.5">
-                      <Badge variant="secondary" className="capitalize bg-card/90 backdrop-blur">{p.goal_type.replace("-", " ")}</Badge>
-                      <Badge variant="secondary" className="capitalize bg-card/90 backdrop-blur">{p.billing_cycle}</Badge>
-                    </div>
-                  </div>
-                  <div className="p-5 flex-1 flex flex-col">
-                    <h3 className="font-display text-xl leading-tight">{p.name}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{p.description}</p>
-                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <span className="rounded-md bg-secondary px-2 py-1 font-medium text-secondary-foreground">{p.meals_per_day} meal{p.meals_per_day === 1 ? "" : "s"}/day</span>
-                      <span className="rounded-md bg-secondary px-2 py-1 font-medium text-secondary-foreground">{p.days_per_week} day{p.days_per_week === 1 ? "" : "s"}/week</span>
-                      {meta.avgProtein > 0 && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 font-semibold text-primary"><Dumbbell className="h-3 w-3" /> ~{meta.avgProtein}g protein</span>
-                      )}
-                      {meta.pureVeg && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-[var(--color-veg)]/10 px-2 py-1 font-semibold text-[var(--color-veg)]"><Leaf className="h-3 w-3" /> Pure Veg</span>
-                      )}
-                      {meta.highFiber && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1 font-semibold text-secondary-foreground"><Wheat className="h-3 w-3" /> High Fibre</span>
-                      )}
-                      {meta.lowCalorie && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1 font-semibold text-secondary-foreground"><Flame className="h-3 w-3 text-[var(--color-terracotta)]" /> Low Cal</span>
-                      )}
-                    </div>
-                    {uniq.length > 0 && (
-                      <div className="mt-4">
-                        <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">What's inside · {uniq.length} dishes</div>
-                        <div className="flex flex-col gap-2">
-                          {uniq.map((m: any) => (
-                            <div key={m.id} className="flex items-center gap-2.5 rounded-lg border bg-card/60 p-1.5 pr-3">
-                              <MealImage path={m.image_url} alt={m.name}
-                                className="h-10 w-10 shrink-0 rounded-md object-cover" />
-                              <div className="min-w-0 flex items-center gap-1.5">
-                                <span className={m.food_type === "veg" || m.food_type === "jain" ? "veg-dot shrink-0" : "nonveg-dot shrink-0"} aria-hidden />
-                                <span className="truncate text-sm font-medium leading-tight">{m.name}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    <div className="mt-5 border-t pt-4">
-                      {meta.savingsPct >= 5 && (
-                        <div className="mb-2">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-saffron)]/15 px-2.5 py-1 text-[11px] font-bold text-[var(--color-saffron-foreground)]">
-                            <BadgePercent className="h-3 w-3" /> Save {meta.savingsPct}% vs à la carte
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between">
-                        <div className="font-display text-2xl leading-none">₹{Number(p.price_inr).toFixed(0)}
-                          <span className="text-xs font-sans font-normal text-muted-foreground">/{cycleSuffix(p.billing_cycle)}</span>
-                          {meta.mealsPerCycle > 1 && (
-                            <div className="mt-0.5 text-[11px] font-sans font-normal text-muted-foreground">≈ ₹{meta.perMeal}/meal</div>
-                          )}
-                        </div>
-                        <span className="inline-flex items-center rounded-full bg-primary px-6 py-2 text-sm font-medium text-primary-foreground transition group-hover:shadow-md">
-                          View
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-                </Link>
-              </Reveal>
-            );
-          })}
+          {visible.map((p: any, i: number) => (
+            <Reveal key={p.id} delay={i * 60} className="h-full">
+              <PlanCard p={p} bestValue={bestValueId === p.id} />
+            </Reveal>
+          ))}
         </div>
 
         <div className="mt-5">
