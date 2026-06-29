@@ -198,6 +198,8 @@ function MenuPage() {
               <div><Label>Carbs (g)</Label><Input type="number" step="0.1" value={editing?.carbs_g ?? 0} onChange={(e) => setEditing({ ...editing, carbs_g: +e.target.value })} /></div>
               <div><Label>Fat (g)</Label><Input type="number" step="0.1" value={editing?.fat_g ?? 0} onChange={(e) => setEditing({ ...editing, fat_g: +e.target.value })} /></div>
               <div><Label>Fiber (g)</Label><Input type="number" step="0.1" value={editing?.fiber_g ?? 0} onChange={(e) => setEditing({ ...editing, fiber_g: +e.target.value })} /></div>
+              <div><Label>Glycemic Index</Label><Input type="number" min={0} max={150} value={editing?.glycemic_index ?? ""} placeholder="e.g. 55" onChange={(e) => setEditing({ ...editing, glycemic_index: e.target.value === "" ? null : +e.target.value })} /></div>
+              <div><Label>Sodium (mg)</Label><Input type="number" step="1" value={editing?.sodium_mg ?? ""} placeholder="e.g. 320" onChange={(e) => setEditing({ ...editing, sodium_mg: e.target.value === "" ? null : +e.target.value })} /></div>
               <div className="md:col-span-2">
                 <Label>Allergens (comma separated)</Label>
                 <Input
