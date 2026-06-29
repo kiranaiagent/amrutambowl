@@ -288,7 +288,39 @@ function PlansPage() {
                   onCheckedChange={(v) => setEditing({ ...editing, is_popular: !!v } as any)} />
                 <Label htmlFor="is_popular" className="cursor-pointer">Mark as Popular (shown in Build-a-Bowl & top of Plans)</Label>
               </div>
-            </div>
+              <div className="md:col-span-2 space-y-2">
+                <Label>Tags / Collections</Label>
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(new Set([...TAG_OPTIONS, ...(editing?.tags ?? [])])).map((t) => {
+                    const on = (editing?.tags ?? []).includes(t);
+                    return (
+                      <button key={t} type="button"
+                        onClick={() => {
+                          const cur = new Set(editing?.tags ?? []);
+                          cur.has(t) ? cur.delete(t) : cur.add(t);
+                          setEditing({ ...editing, tags: [...cur] });
+                        }}
+                        className={`rounded-full border px-3 py-1 text-xs ${on ? "bg-primary text-primary-foreground border-primary" : "bg-secondary"}`}>
+                        {t}
+                      </button>
+                    );
+                  })}
+                </div>
+                <Input
+                  placeholder="Add a custom tag and press Enter"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const v = (e.target as HTMLInputElement).value.trim().toLowerCase().replace(/\s+/g, "-");
+                      if (!v) return;
+                      const cur = new Set(editing?.tags ?? []);
+                      cur.add(v);
+                      setEditing({ ...editing, tags: [...cur] });
+                      (e.target as HTMLInputElement).value = "";
+                    }
+                  }}
+                />
+              </div>
             <DialogFooter>
               <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
               <Button onClick={() => editing && save.mutate(editing)} disabled={save.isPending}>Save</Button>
