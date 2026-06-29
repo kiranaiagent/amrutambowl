@@ -56,7 +56,7 @@ function Home() {
     queryFn: async () => {
       const { data } = await supabase
         .from("plans")
-        .select("*, plan_items(menu_items(id,name,image_url,food_type,calories,protein_g))")
+        .select("*, plan_items(menu_items(id,name,image_url,food_type,calories,protein_g,fiber_g,glycemic_index,sodium_mg))")
         .eq("status", "active")
         .order("is_popular" as any, { ascending: false })
         .order("price_inr", { ascending: true })

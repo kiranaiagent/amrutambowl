@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { MealImage } from "@/components/MealImage";
-import { Dumbbell, Flame, Leaf, Wheat, BadgePercent } from "lucide-react";
+import { Dumbbell, Flame, Leaf, Wheat, BadgePercent, Activity, Droplet } from "lucide-react";
 import { planMeta } from "@/lib/planValue";
+import { tagLabel } from "@/lib/tags";
 
 const CYCLE_SUFFIX: Record<string, string> = {
   daily: "day", weekly: "week", biweekly: "2 wks", monthly: "month", custom_dates: "plan",
@@ -36,6 +37,13 @@ export function PlanCard({ p, bestValue = false }: { p: any; bestValue?: boolean
 
         <div className="flex flex-1 flex-col gap-2.5 p-3.5">
           <h3 className="font-semibold leading-tight line-clamp-1">{p.name}</h3>
+          {Array.isArray(p.tags) && p.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {p.tags.slice(0, 3).map((t: string) => (
+                <span key={t} className="rounded-full bg-[var(--color-saffron)]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--color-saffron-foreground)]">{tagLabel(t)}</span>
+              ))}
+            </div>
+          )}
           {ingredients && (
             <p className="text-xs leading-snug text-muted-foreground line-clamp-2">{ingredients}</p>
           )}
@@ -54,6 +62,12 @@ export function PlanCard({ p, bestValue = false }: { p: any; bestValue?: boolean
             )}
             {meta.lowCalorie && (
               <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground"><Flame className="h-3 w-3 text-[var(--color-terracotta)]" /> Low Cal</span>
+            )}
+            {meta.lowGI && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground"><Activity className="h-3 w-3" /> Low GI</span>
+            )}
+            {meta.lowSodium && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground"><Droplet className="h-3 w-3" /> Low Sodium</span>
             )}
           </div>
           {meta.savingsPct >= 5 && (

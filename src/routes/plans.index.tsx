@@ -6,10 +6,11 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { PlanCard } from "@/components/PlanCard";
-import { ChefHat, Dumbbell, Leaf, Wheat, Flame, Wallet, Salad } from "lucide-react";
+import { ChefHat, Dumbbell, Leaf, Wheat, Flame, Activity, Droplet } from "lucide-react";
 import { BuildBowlCard } from "@/components/BuildBowlCard";
 import { Reveal } from "@/components/Reveal";
 import { planMeta, type PlanMeta } from "@/lib/planValue";
+import { tagLabel, tagIcon } from "@/lib/tags";
 
 const GOALS = [
   { v: "all", label: "All" },
@@ -19,22 +20,14 @@ const GOALS = [
   { v: "keto", label: "Keto" },
 ];
 
-// Derived dietary + health facets (computed from each plan's dishes — no schema needed).
+// Derived dietary + health facets (computed from each plan's dishes).
 const FACETS: { v: string; label: string; Icon: any; test: (m: PlanMeta) => boolean }[] = [
   { v: "pureVeg", label: "Pure Veg", Icon: Leaf, test: (m) => m.pureVeg },
   { v: "highProtein", label: "High Protein", Icon: Dumbbell, test: (m) => m.highProtein },
   { v: "highFiber", label: "High Fibre", Icon: Wheat, test: (m) => m.highFiber },
   { v: "lowCalorie", label: "Low Calorie", Icon: Flame, test: (m) => m.lowCalorie },
-];
-
-// Curated collections — marketing-friendly groupings, derived from existing data.
-const BUDGET_PER_MEAL = 250; // ₹/meal threshold for value picks
-const COLLECTIONS: { v: string; label: string; Icon: any; test: (p: any, m: PlanMeta) => boolean }[] = [
-  { v: "protein", label: "Protein Packs", Icon: Dumbbell, test: (_p, m) => m.highProtein },
-  { v: "light", label: "Light & High-Fibre", Icon: Wheat, test: (_p, m) => m.lowCalorie && m.highFiber },
-  { v: "veg", label: "Pure Veg", Icon: Leaf, test: (_p, m) => m.pureVeg },
-  { v: "budget", label: "Budget Picks", Icon: Wallet, test: (_p, m) => m.perMeal > 0 && m.perMeal <= BUDGET_PER_MEAL },
-  { v: "keto", label: "Keto-Friendly", Icon: Salad, test: (p) => p.goal_type === "keto" },
+  { v: "lowGI", label: "Low GI", Icon: Activity, test: (m) => m.lowGI },
+  { v: "lowSodium", label: "Low Sodium", Icon: Droplet, test: (m) => m.lowSodium },
 ];
 
 export const Route = createFileRoute("/plans/")({
@@ -65,7 +58,7 @@ function PlansPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("plans")
-        .select("*, plan_items(menu_items(id,name,image_url,food_type,price_inr,protein_g,fiber_g,calories))")
+        .select("*, plan_items(menu_items(id,name,image_url,food_type,price_inr,protein_g,fiber_g,calories,glycemic_index,sodium_mg))")
         .eq("status", "active").order("is_popular" as any, { ascending: false }).order("price_inr");
       if (error) throw error;
       return data as any[];
@@ -84,11 +77,12 @@ function PlansPage() {
   }
 
   const activeFacets = FACETS.filter((f) => facets.has(f.v));
-  const activeCollection = COLLECTIONS.find((c) => c.v === collection) ?? null;
+  // Collections come from real plan tags actually present on active plans.
+  const presentTags = Array.from(new Set(plans.flatMap((p) => (p.tags ?? []) as string[]))).sort();
   const visible = plans.filter((p) => {
     if (goal !== "all" && p.goal_type !== goal) return false;
+    if (collection && !((p.tags ?? []) as string[]).includes(collection)) return false;
     const m = metas.get(p.id)!;
-    if (activeCollection && !activeCollection.test(p, m)) return false;
     return activeFacets.every((f) => f.test(m));
   });
 
@@ -106,20 +100,23 @@ function PlansPage() {
         {/* Goal finder + dietary/health filters */}
         {plans.length > 0 && (
           <Reveal className="mt-5 space-y-3 rounded-2xl border bg-card/70 p-4 shadow-sm backdrop-blur">
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Collections</div>
-              <div className="flex flex-wrap gap-2">
-                {COLLECTIONS.map((c) => {
-                  const on = collection === c.v;
-                  return (
-                    <button key={c.v} type="button" onClick={() => setCollection(on ? null : c.v)}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition ${on ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-primary/5 border-primary/20 text-primary hover:bg-primary/10"}`}>
-                      <c.Icon className="h-4 w-4" /> {c.label}
-                    </button>
-                  );
-                })}
+            {presentTags.length > 0 && (
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Collections</div>
+                <div className="flex flex-wrap gap-2">
+                  {presentTags.map((t) => {
+                    const on = collection === t;
+                    const Icon = tagIcon(t);
+                    return (
+                      <button key={t} type="button" onClick={() => setCollection(on ? null : t)}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition ${on ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-primary/5 border-primary/20 text-primary hover:bg-primary/10"}`}>
+                        <Icon className="h-4 w-4" /> {tagLabel(t)}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">What's your goal?</div>
               <div className="flex flex-wrap gap-2">

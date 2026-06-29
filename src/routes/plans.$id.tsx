@@ -9,9 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
+import { useSiteSettings } from "@/lib/settings";
+import { SENSITIVE_TAGS, tagLabel } from "@/lib/tags";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
-import { RotateCcw, Calendar as CalendarIcon, ChefHat } from "lucide-react";
+import { RotateCcw, Calendar as CalendarIcon, ChefHat, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 
@@ -34,6 +36,7 @@ type Override = { day: number; slot: string; menu_item_id: string | null };
 function PlanDetail() {
   const { id } = Route.useParams();
   const { user } = useAuth();
+  const { data: settings } = useSiteSettings();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"standard" | "custom">("standard");
   const [overrides, setOverrides] = useState<Record<string, string | null>>({});
@@ -177,6 +180,9 @@ function PlanDetail() {
                     <Badge variant="outline" className="capitalize">{p.billing_cycle}</Badge>
                     <Badge variant="secondary" className="text-xs">{p.meals_per_day} meal{p.meals_per_day === 1 ? "" : "s"}/day</Badge>
                     <Badge variant="secondary" className="text-xs">{p.days_per_week} day{p.days_per_week === 1 ? "" : "s"}/week</Badge>
+                    {((p.tags ?? []) as string[]).map((t) => (
+                      <Badge key={t} variant="outline" className="text-xs">{tagLabel(t)}</Badge>
+                    ))}
                   </div>
                   <h1 className="font-display text-2xl md:text-3xl font-bold leading-tight">{p.name}</h1>
                   <p className="text-sm text-muted-foreground line-clamp-2">{p.description}</p>
@@ -201,6 +207,14 @@ function PlanDetail() {
                 </div>
               </div>
             </Card>
+
+            {/* Health-claim disclaimer for condition-targeted plans */}
+            {((p.tags ?? []) as string[]).some((t) => SENSITIVE_TAGS.includes(t)) && (
+              <div className="mt-4 flex items-start gap-2 rounded-lg border border-[var(--color-saffron)]/40 bg-[var(--color-saffron)]/10 p-3 text-xs text-muted-foreground">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-saffron-foreground)]" />
+                <span>{settings?.medical_disclaimer ?? "Designed to support a balanced lifestyle — not medical advice. Please consult your doctor."}</span>
+              </div>
+            )}
 
             {/* Build-a-Bowl from this plan CTA */}
             <div className="mt-4 flex items-center justify-between flex-wrap gap-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">

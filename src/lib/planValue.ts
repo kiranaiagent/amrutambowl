@@ -2,9 +2,11 @@
 const CYCLE_WEEKS: Record<string, number> = { daily: 0, weekly: 1, biweekly: 2, monthly: 4 };
 
 // Per-meal thresholds for the derived "health" facets.
-const HIGH_PROTEIN = 12; // g
-const HIGH_FIBER = 4;    // g
-const LOW_CALORIE = 300; // kcal
+const HIGH_PROTEIN = 12;  // g
+const HIGH_FIBER = 4;     // g
+const LOW_CALORIE = 300;  // kcal
+const LOW_GI = 55;        // glycemic index (≤55 = low GI, standard)
+const LOW_SODIUM = 140;   // mg/serving (FDA "low sodium")
 
 export type PlanMeta = {
   perMeal: number;        // rounded ₹ per meal
@@ -13,6 +15,8 @@ export type PlanMeta = {
   avgProtein: number;     // avg grams of protein per meal (0 if unknown)
   avgFiber: number;       // avg grams of fibre per meal (0 if unknown)
   avgCal: number;         // avg calories per meal (0 if unknown)
+  avgGI: number;          // avg glycemic index (0 if unknown)
+  avgSodium: number;      // avg mg sodium per meal (0 if unknown)
   // diet classification
   containsNonVeg: boolean;
   containsEgg: boolean;
@@ -21,6 +25,8 @@ export type PlanMeta = {
   highProtein: boolean;
   highFiber: boolean;
   lowCalorie: boolean;
+  lowGI: boolean;
+  lowSodium: boolean;
 };
 
 const avg = (xs: number[]) => (xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : 0);
@@ -40,6 +46,8 @@ export function planMeta(p: any): PlanMeta {
   const avgProtein = avg(items.map((m: any) => Number(m.protein_g)).filter((n: number) => n > 0));
   const avgFiber = avg(items.map((m: any) => Number(m.fiber_g)).filter((n: number) => n > 0));
   const avgCal = avg(items.map((m: any) => Number(m.calories)).filter((n: number) => n > 0));
+  const avgGI = avg(items.map((m: any) => Number(m.glycemic_index)).filter((n: number) => n > 0));
+  const avgSodium = avg(items.map((m: any) => Number(m.sodium_mg)).filter((n: number) => n > 0));
 
   const types: string[] = items.map((m: any) => String(m.food_type ?? ""));
   const containsNonVeg = types.some((t) => t === "non-veg" || t === "nonveg");
@@ -48,10 +56,12 @@ export function planMeta(p: any): PlanMeta {
 
   return {
     perMeal: Math.round(perMeal), mealsPerCycle, savingsPct,
-    avgProtein, avgFiber, avgCal,
+    avgProtein, avgFiber, avgCal, avgGI, avgSodium,
     containsNonVeg, containsEgg, pureVeg,
     highProtein: avgProtein >= HIGH_PROTEIN,
     highFiber: avgFiber >= HIGH_FIBER,
     lowCalorie: avgCal > 0 && avgCal <= LOW_CALORIE,
+    lowGI: avgGI > 0 && avgGI <= LOW_GI,
+    lowSodium: avgSodium > 0 && avgSodium <= LOW_SODIUM,
   };
 }
