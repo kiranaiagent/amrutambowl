@@ -39,6 +39,7 @@ type Plan = {
   start_day_of_week: number | null;
   start_date: string | null;
   delivery_days: number[];
+  tags: string[];
 };
 
 export const Route = createFileRoute("/_authenticated/admin/plans")({
