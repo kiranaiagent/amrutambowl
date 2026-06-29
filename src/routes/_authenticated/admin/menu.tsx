@@ -34,6 +34,8 @@ type Item = {
   carbs_g: number;
   fat_g: number;
   fiber_g: number;
+  glycemic_index: number | null;
+  sodium_mg: number | null;
   food_type: "veg" | "non-veg" | "egg" | "jain";
   allergens: string[] | null;
   tags: string[] | null;
