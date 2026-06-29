@@ -49,6 +49,11 @@ export const Route = createFileRoute("/_authenticated/admin/plans")({
 const GOALS = ["weight-loss", "muscle-gain", "balanced", "keto"] as const;
 const CYCLES: Cycle[] = ["daily", "weekly", "biweekly", "monthly"];
 const CYCLE_DEFAULTS: Record<Cycle, number> = { daily: 1, weekly: 7, biweekly: 14, monthly: 28 };
+const TAG_OPTIONS = [
+  "low-gi", "diabetic-friendly", "student-tiffin", "high-protein", "low-calorie",
+  "high-fibre", "heart-healthy", "pcos-friendly", "gut-health", "office-lunch",
+  "kids", "vegan", "millet", "sattvik",
+];
 const WEEKDAYS = [
   { v: 0, label: "Sun" },
   { v: 1, label: "Mon" },
@@ -64,6 +69,7 @@ function emptyPlan(): Partial<Plan> {
     name: "", description: "", goal_type: "balanced", meals_per_day: 2, days_per_week: 5,
     billing_cycle: "weekly", price_inr: 0, status: "active", image_url: "",
     duration_days: 7, delivery_days: [1, 2, 3, 4, 5], start_day_of_week: 1, start_date: null,
+    tags: [],
   };
 }
 
