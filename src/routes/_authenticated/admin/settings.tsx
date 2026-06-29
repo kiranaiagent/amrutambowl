@@ -42,6 +42,7 @@ function SettingsPage() {
       { key: "whatsapp_number", value: form.whatsapp_number.replace(/\s/g, "") },
       { key: "phone_number", value: form.phone_number.replace(/\s/g, "") },
       { key: "whatsapp_prefill", value: form.whatsapp_prefill },
+      { key: "medical_disclaimer", value: form.medical_disclaimer },
     ];
     const { error } = await supabase.from("site_settings").upsert(rows, { onConflict: "key" });
     setSaving(false);
