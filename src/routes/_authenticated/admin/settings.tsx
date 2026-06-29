@@ -26,6 +26,7 @@ function SettingsPage() {
     whatsapp_number: "",
     phone_number: "",
     whatsapp_prefill: "",
+    medical_disclaimer: "",
   });
 
   useEffect(() => {
