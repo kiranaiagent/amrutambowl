@@ -321,6 +321,7 @@ function PlansPage() {
                   }}
                 />
               </div>
+            </div>
             <DialogFooter>
               <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
               <Button onClick={() => editing && save.mutate(editing)} disabled={save.isPending}>Save</Button>
