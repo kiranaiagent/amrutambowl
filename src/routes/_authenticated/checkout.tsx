@@ -145,8 +145,8 @@ function Checkout() {
     queryKey: ["addons-public-menu"],
     queryFn: async () => {
       const { data, error } = await supabase.from("menu_items")
-        .select("id,name,description,image_url,price_inr,food_type,is_available")
-        .eq("status", "active").eq("is_available", true).order("name");
+        .select("id,name,description,image_url,price_inr,food_type,is_available,kind")
+        .eq("status", "active").eq("is_available", true).eq("is_addon", true).order("name");
       if (error) throw error;
       return data;
     },
@@ -606,8 +606,9 @@ function Checkout() {
                 </div>
               </div>
 
+              {(addonsQ.data?.length ?? 0) > 0 && (
               <div className="border-t pt-4">
-                <Label>Add extras (per delivery)</Label>
+                <Label>Add beverages &amp; snacks (per delivery)</Label>
                 <div className="grid sm:grid-cols-2 gap-2 mt-2">
                   {(addonsQ.data ?? []).map((a: any) => {
                     const q = addonQty[a.id] ?? 0;
@@ -628,6 +629,7 @@ function Checkout() {
                   })}
                 </div>
               </div>
+              )}
 
               <div>
                 <Label>Special instructions</Label>

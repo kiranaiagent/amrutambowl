@@ -139,6 +139,13 @@ function BowlPage() {
     return m;
   }, [menuQ.data]);
 
+  // Meal slots offer sellable Bowls; fall back to all items if none are tagged yet.
+  const mealOptions = useMemo(() => {
+    const all = menuQ.data ?? [];
+    const bowls = all.filter((m: any) => m.kind === "bowl");
+    return bowls.length ? bowls : all;
+  }, [menuQ.data]);
+
   const subtotal = useMemo(() => {
     let sum = 0;
     for (const d of deliveries) {
@@ -358,7 +365,7 @@ function BowlPage() {
                     <div className="mt-3 flex items-center justify-between border-t pt-2.5">
                       <div className="font-semibold text-sm">{picked ? `₹${Number(picked.price_inr).toFixed(0)}` : <span className="text-muted-foreground font-normal">—</span>}</div>
                       <MealPicker
-                        items={menuQ.data ?? []}
+                        items={mealOptions}
                         currentId={picks[key] ?? null}
                         slotHint={d.slot}
                         onPick={(id) => setPicks((cur) => ({ ...cur, [key]: id }))}

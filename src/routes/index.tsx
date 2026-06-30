@@ -47,8 +47,11 @@ function Home() {
     queryKey: ["home-meals"],
     queryFn: async () => {
       const { data } = await supabase.from("menu_items").select("*").eq("status", "active")
-        .order("calories", { ascending: false }).limit(8);
-      return data ?? [];
+        .order("calories", { ascending: false }).limit(16);
+      const all = data ?? [];
+      // Prefer sellable Bowls; fall back to whatever's active if none are tagged yet.
+      const bowls = all.filter((m: any) => m.kind === "bowl");
+      return (bowls.length ? bowls : all).slice(0, 8);
     },
   });
   const plans = useQuery({
