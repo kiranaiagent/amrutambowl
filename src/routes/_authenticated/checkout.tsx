@@ -42,7 +42,7 @@ type BowlConfig = {
   startDate: string;
   preferredTime: string;
   primarySlot: "breakfast" | "lunch" | "dinner";
-  picks: { date: string; slot: "breakfast" | "lunch" | "dinner"; menu_item_id: string | null }[];
+  picks: { date: string; slot: "breakfast" | "lunch" | "dinner"; menu_item_ids: string[] }[];
   subtotal: number;
 };
 
@@ -130,7 +130,7 @@ function Checkout() {
   }, [planQ.data?.billing_cycle]);
 
   // Bowl-mode menu lookup (for line items)
-  const bowlMenuIds = useMemo(() => bowlConfig?.picks.map((p) => p.menu_item_id).filter((x): x is string => !!x) ?? [], [bowlConfig]);
+  const bowlMenuIds = useMemo(() => bowlConfig?.picks.flatMap((p) => p.menu_item_ids ?? []) ?? [], [bowlConfig]);
   const bowlMenuQ = useQuery({
     queryKey: ["bowl-menu-items", bowlMenuIds.join(",")],
     enabled: bowlMenuIds.length > 0,
@@ -314,10 +314,11 @@ function Checkout() {
         // Group picks by date
         const byDate = new Map<string, { slot: string; menu_item_id: string }[]>();
         bowlConfig.picks.forEach((p) => {
-          if (!p.menu_item_id) return;
-          const arr = byDate.get(p.date) ?? [];
-          arr.push({ slot: p.slot, menu_item_id: p.menu_item_id });
-          byDate.set(p.date, arr);
+          (p.menu_item_ids ?? []).forEach((mid) => {
+            const arr = byDate.get(p.date) ?? [];
+            arr.push({ slot: p.slot, menu_item_id: mid });
+            byDate.set(p.date, arr);
+          });
         });
 
         const menuById = new Map((bowlMenuQ.data ?? []).map((m: any) => [m.id, m]));
@@ -461,7 +462,7 @@ function Checkout() {
         {isBowl && bowlConfig && (
           <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
             <span className="font-medium text-primary">Custom bowl</span>
-            <span className="text-muted-foreground"> · {bowlConfig.picks.filter((p) => p.menu_item_id).length} meal(s) · {bowlConfig.cycle} · {bowlConfig.duration} day(s) · preferred {bowlConfig.preferredTime}</span>
+            <span className="text-muted-foreground"> · {bowlConfig.picks.filter((p) => (p.menu_item_ids ?? []).length).length} meal(s) · {bowlConfig.cycle} · {bowlConfig.duration} day(s) · preferred {bowlConfig.preferredTime}</span>
           </div>
         )}
         {isPlan && planOverrides.length > 0 && (

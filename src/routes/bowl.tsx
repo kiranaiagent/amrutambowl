@@ -5,7 +5,6 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { Footer } from "@/components/Footer";
 import { MealImage } from "@/components/MealImage";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { Filter, Search, Sparkles, Trash2, ChevronDown, CalendarDays, ClipboardList, UtensilsCrossed } from "lucide-react";
+import { Sparkles, Trash2, ChevronDown, CalendarDays, ClipboardList, UtensilsCrossed, Check, Plus as PlusIcon } from "lucide-react";
 
 /** Build-a-Bowl: schedule + per-delivery menu picker. */
 export const Route = createFileRoute("/bowl")({
@@ -38,7 +37,6 @@ const WEEKDAYS = [
   { v: 3, label: "Wed" }, { v: 4, label: "Thu" }, { v: 5, label: "Fri" }, { v: 6, label: "Sat" },
 ];
 const CYCLE_DEFAULT_DURATION: Record<BowlCycle, number> = { daily: 1, weekly: 7, biweekly: 14, monthly: 28 };
-const FOOD_FILTERS = ["all", "veg", "non-veg", "egg", "jain"] as const;
 
 function isoDate(d: Date) { return d.toISOString().slice(0, 10); }
 function addDays(base: Date, n: number) { const d = new Date(base); d.setDate(d.getDate() + n); return d; }
@@ -61,8 +59,9 @@ function BowlPage() {
   // Which accordion step is expanded (0 = all collapsed)
   const [openStep, setOpenStep] = useState(1);
 
-  // ---- Menu picks: keyed `${date}|${slot}` -> menu_item_id ----
-  const [picks, setPicks] = useState<Record<string, string | null>>({});
+  // ---- Menu picks: keyed `${date}|${slot}` -> list of item ids.
+  // A signature bowl = [bowlId]; a custom bowl = [ingredientId, ...]. ----
+  const [picks, setPicks] = useState<Record<string, string[]>>({});
 
   // ---- Data ----
   const menuQ = useQuery({
@@ -110,7 +109,7 @@ function BowlPage() {
   useEffect(() => {
     setPicks((cur) => {
       const valid = new Set(deliveries.map((d) => `${d.date}|${d.slot}`));
-      const next: Record<string, string | null> = {};
+      const next: Record<string, string[]> = {};
       for (const [k, v] of Object.entries(cur)) if (valid.has(k)) next[k] = v;
       return next;
     });
@@ -139,25 +138,18 @@ function BowlPage() {
     return m;
   }, [menuQ.data]);
 
-  // Meal slots offer sellable Bowls; fall back to all items if none are tagged yet.
-  const mealOptions = useMemo(() => {
-    const all = menuQ.data ?? [];
-    const bowls = all.filter((m: any) => m.kind === "bowl");
-    return bowls.length ? bowls : all;
-  }, [menuQ.data]);
-
   const subtotal = useMemo(() => {
     let sum = 0;
     for (const d of deliveries) {
-      const id = picks[`${d.date}|${d.slot}`];
-      if (!id) continue;
-      const mi = menuById.get(id);
-      if (mi) sum += Number(mi.price_inr);
+      for (const id of picks[`${d.date}|${d.slot}`] ?? []) {
+        const mi = menuById.get(id);
+        if (mi) sum += Number(mi.price_inr);
+      }
     }
     return sum;
   }, [deliveries, picks, menuById]);
 
-  const filled = useMemo(() => deliveries.filter((d) => picks[`${d.date}|${d.slot}`]).length, [deliveries, picks]);
+  const filled = useMemo(() => deliveries.filter((d) => (picks[`${d.date}|${d.slot}`] ?? []).length > 0).length, [deliveries, picks]);
 
   // ---- Actions ----
   const toggleDay = (v: number) => {
@@ -181,7 +173,7 @@ function BowlPage() {
         const dow = new Date(d.date).getDay();
         const candidate = (items ?? []).find((pi: any) => (pi.day_of_week % 7) === dow && pi.slot === d.slot)
           ?? (items ?? []).find((pi: any) => pi.slot === d.slot);
-        if (candidate?.menu_item_id) next[`${d.date}|${d.slot}`] = candidate.menu_item_id;
+        if (candidate?.menu_item_id) next[`${d.date}|${d.slot}`] = [candidate.menu_item_id];
       });
       return next;
     });
@@ -196,7 +188,7 @@ function BowlPage() {
       kind: "bowl",
       cycle, mealsPerDay, duration, deliveryDays,
       startDate, preferredTime, primarySlot,
-      picks: deliveries.map((d) => ({ date: d.date, slot: d.slot, menu_item_id: picks[`${d.date}|${d.slot}`] ?? null })),
+      picks: deliveries.map((d) => ({ date: d.date, slot: d.slot, menu_item_ids: picks[`${d.date}|${d.slot}`] ?? [] })),
       subtotal,
     };
     try { sessionStorage.setItem(BOWL_KEY, JSON.stringify(config)); } catch {}
@@ -336,39 +328,51 @@ function BowlPage() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {deliveries.map((d) => {
                 const key = `${d.date}|${d.slot}`;
-                const picked = picks[key] ? menuById.get(picks[key]!) : null;
-                const macro = picked && (picked.calories > 0 || picked.protein_g > 0)
-                  ? [picked.calories > 0 ? `${picked.calories} kcal` : null, picked.protein_g > 0 ? `${picked.protein_g}g protein` : null].filter(Boolean).join(" · ")
+                const ids = picks[key] ?? [];
+                const chosen = ids.map((id) => menuById.get(id)).filter(Boolean) as any[];
+                const slotPrice = chosen.reduce((s, m) => s + Number(m.price_inr || 0), 0);
+                const isSignature = chosen.length === 1 && chosen[0].kind === "bowl";
+                const macro = isSignature && (chosen[0].calories > 0 || chosen[0].protein_g > 0)
+                  ? [chosen[0].calories > 0 ? `${chosen[0].calories} kcal` : null, chosen[0].protein_g > 0 ? `${chosen[0].protein_g}g protein` : null].filter(Boolean).join(" · ")
                   : null;
                 return (
-                  <div key={key} className={`rounded-xl border p-3 transition ${picked ? "bg-secondary/20" : "border-dashed"}`}>
+                  <div key={key} className={`rounded-xl border p-3 transition ${chosen.length ? "bg-secondary/20" : "border-dashed"}`}>
                     <div className="flex items-center justify-between">
                       <div className="font-medium text-sm">{dayLabel(d.date)}</div>
                       <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wide font-semibold text-secondary-foreground capitalize">{d.slot}</span>
                     </div>
                     <div className="mt-3 min-h-[3rem]">
-                      {picked ? (
+                      {chosen.length === 0 ? (
+                        <div className="flex h-12 items-center text-sm text-muted-foreground italic">No bowl chosen yet</div>
+                      ) : isSignature ? (
                         <div className="flex items-center gap-2.5">
-                          <MealImage path={picked.image_url} alt={picked.name} className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                          <MealImage path={chosen[0].image_url} alt={chosen[0].name} className="h-12 w-12 rounded-lg object-cover shrink-0" />
                           <div className="min-w-0">
                             <div className="font-medium text-sm leading-tight flex items-center gap-1.5">
-                              <span className={picked.food_type === "veg" || picked.food_type === "jain" ? "veg-dot" : "nonveg-dot"} />
-                              <span className="truncate">{picked.name}</span>
+                              <span className={chosen[0].food_type === "veg" || chosen[0].food_type === "jain" ? "veg-dot" : "nonveg-dot"} />
+                              <span className="truncate">{chosen[0].name}</span>
                             </div>
                             {macro && <div className="text-[11px] text-muted-foreground mt-0.5">{macro}</div>}
                           </div>
                         </div>
                       ) : (
-                        <div className="flex h-12 items-center text-sm text-muted-foreground italic">No meal chosen yet</div>
+                        <div>
+                          <div className="text-sm font-medium leading-tight">Custom bowl · {chosen.length} item{chosen.length === 1 ? "" : "s"}</div>
+                          <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">{chosen.map((m) => m.name).join(" · ")}</div>
+                        </div>
                       )}
                     </div>
                     <div className="mt-3 flex items-center justify-between border-t pt-2.5">
-                      <div className="font-semibold text-sm">{picked ? `₹${Number(picked.price_inr).toFixed(0)}` : <span className="text-muted-foreground font-normal">—</span>}</div>
+                      <div className="font-semibold text-sm">{chosen.length ? `₹${slotPrice.toFixed(0)}` : <span className="text-muted-foreground font-normal">—</span>}</div>
                       <MealPicker
-                        items={mealOptions}
-                        currentId={picks[key] ?? null}
+                        items={menuQ.data ?? []}
+                        currentIds={ids}
                         slotHint={d.slot}
-                        onPick={(id) => setPicks((cur) => ({ ...cur, [key]: id }))}
+                        onPick={(newIds) => setPicks((cur) => {
+                          const n = { ...cur };
+                          if (newIds.length) n[key] = newIds; else delete n[key];
+                          return n;
+                        })}
                       />
                     </div>
                   </div>
@@ -418,90 +422,106 @@ function StepSection({ n, Icon, title, summary, open, onToggle, children }: {
   );
 }
 
-function MealPicker({ items, currentId, slotHint, onPick }: {
-  items: any[]; currentId: string | null; slotHint: BowlSlot;
-  onPick: (id: string | null) => void;
+const ROLE_ORDER = ["base", "protein", "vegetable", "sauce", "topping", "other"] as const;
+const ROLE_LABEL: Record<string, string> = {
+  base: "Base", protein: "Protein", vegetable: "Vegetables", sauce: "Sauce", topping: "Toppings", other: "Extras",
+};
+
+function MealPicker({ items, currentIds, slotHint, onPick }: {
+  items: any[]; currentIds: string[]; slotHint: BowlSlot;
+  onPick: (ids: string[]) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [q, setQ] = useState("");
-  const [foodFilter, setFoodFilter] = useState<(typeof FOOD_FILTERS)[number]>("all");
-  const [minProtein, setMinProtein] = useState(0);
-  const [maxCals, setMaxCals] = useState(0);
-  const [onlySlot, setOnlySlot] = useState(false);
+  const [tab, setTab] = useState<"bowls" | "custom">(currentIds.length > 1 ? "custom" : "bowls");
+  const [sel, setSel] = useState<string[]>(currentIds);
+  useEffect(() => {
+    if (open) { setSel(currentIds); setTab(currentIds.length > 1 ? "custom" : "bowls"); }
+  }, [open]);
 
-  const filtered = useMemo(() => {
-    return items.filter((it: any) => {
-      if (foodFilter !== "all" && it.food_type !== foodFilter) return false;
-      if (q && !it.name.toLowerCase().includes(q.toLowerCase())) return false;
-      if (minProtein > 0 && Number(it.protein_g ?? 0) < minProtein) return false;
-      if (maxCals > 0 && Number(it.calories ?? 0) > maxCals) return false;
-      if (onlySlot && it.meal_type && it.meal_type !== slotHint) return false;
-      return true;
-    });
-  }, [items, foodFilter, q, minProtein, maxCals, onlySlot, slotHint]);
+  const byId = useMemo(() => {
+    const m = new Map<string, any>();
+    items.forEach((i) => m.set(i.id, i));
+    return m;
+  }, [items]);
+  const realBowls = items.filter((i) => i.kind === "bowl");
+  const bowlList = realBowls.length ? realBowls : items.filter((i) => i.kind !== "ingredient");
+  const ingredients = items.filter((i) => i.kind === "ingredient");
+  const byRole = ROLE_ORDER
+    .map((r) => ({ role: r as string, list: ingredients.filter((i) => (i.component_role || "other") === r) }))
+    .filter((g) => g.list.length);
+
+  const selTotal = sel.reduce((s, id) => s + Number(byId.get(id)?.price_inr || 0), 0);
+  const toggle = (id: string) => setSel((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant={currentId ? "outline" : "default"}>{currentId ? "Change" : "Pick"}</Button>
+        <Button size="sm" variant={currentIds.length ? "outline" : "default"}>{currentIds.length ? "Change" : "Pick"}</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Pick a meal · <span className="capitalize text-muted-foreground">{slotHint}</span></DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <div className="flex flex-wrap gap-2 items-center">
-            <div className="relative flex-1 min-w-[180px]">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search meals…" className="pl-7" />
-            </div>
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            {FOOD_FILTERS.map((f) => (
-              <button key={f} onClick={() => setFoodFilter(f)}
-                className={`rounded-full px-2.5 py-1 text-xs capitalize border ${foodFilter === f ? "bg-primary text-primary-foreground border-primary" : "bg-secondary"}`}>
-                {f}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-3 items-end text-xs">
-            <div>
-              <Label className="text-xs">Min Protein (g)</Label>
-              <Input type="number" min={0} value={minProtein || ""} onChange={(e) => setMinProtein(+e.target.value || 0)} className="h-8 w-24" />
-            </div>
-            <div>
-              <Label className="text-xs">Max Calories</Label>
-              <Input type="number" min={0} value={maxCals || ""} onChange={(e) => setMaxCals(+e.target.value || 0)} className="h-8 w-24" />
-            </div>
-            <label className="inline-flex items-center gap-1.5 ml-auto">
-              <input type="checkbox" checked={onlySlot} onChange={(e) => setOnlySlot(e.target.checked)} />
-              Only <span className="capitalize">{slotHint}</span> meals
-            </label>
-            {currentId && (
-              <Button size="sm" variant="ghost" onClick={() => { onPick(null); setOpen(false); }}>Clear</Button>
-            )}
-          </div>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Choose for <span className="capitalize text-muted-foreground">{slotHint}</span></DialogTitle></DialogHeader>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            {filtered.length === 0 && <p className="col-span-2 text-sm text-muted-foreground p-4 text-center">No meals match.</p>}
-            {filtered.map((it: any) => (
-              <button key={it.id} onClick={() => { onPick(it.id); setOpen(false); }}
-                className={`text-left rounded-lg border overflow-hidden hover:border-primary hover:shadow-sm transition flex
-                  ${currentId === it.id ? "border-primary ring-1 ring-primary" : ""}`}>
-                <MealImage path={it.image_url} alt={it.name} className="h-24 w-24 object-cover shrink-0" />
-                <div className="p-2.5 flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className={it.food_type === "veg" || it.food_type === "jain" ? "veg-dot" : "nonveg-dot"} />
-                    <span className="font-medium text-sm truncate">{it.name}</span>
-                  </div>
-                  <div className="text-[11px] text-muted-foreground line-clamp-2">{it.description}</div>
-                  <div className="text-[11px] text-muted-foreground mt-1">{it.calories} kcal · P {it.protein_g}g · {it.meal_type ?? "any"}</div>
-                  <div className="mt-1 flex items-center justify-between">
-                    <Badge variant="outline" className="text-[10px]">₹{Number(it.price_inr).toFixed(0)}</Badge>
-                    {it.serving_size && <span className="text-[10px] text-muted-foreground">{it.serving_size}</span>}
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
+        <div className="inline-flex rounded-lg border p-1 bg-card">
+          <button onClick={() => setTab("bowls")} className={`px-3 py-1.5 text-sm rounded-md ${tab === "bowls" ? "bg-primary text-primary-foreground" : ""}`}>Signature Bowls</button>
+          <button onClick={() => setTab("custom")} className={`px-3 py-1.5 text-sm rounded-md ${tab === "custom" ? "bg-primary text-primary-foreground" : ""}`}>Build Your Own</button>
         </div>
+
+        {tab === "bowls" ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {bowlList.length === 0 && <p className="col-span-2 p-4 text-center text-sm text-muted-foreground">No bowls available yet.</p>}
+            {bowlList.map((it: any) => {
+              const active = currentIds.length === 1 && currentIds[0] === it.id;
+              return (
+                <button key={it.id} onClick={() => { onPick([it.id]); setOpen(false); }}
+                  className={`flex overflow-hidden rounded-lg border text-left transition hover:border-primary hover:shadow-sm ${active ? "border-primary ring-1 ring-primary" : ""}`}>
+                  <MealImage path={it.image_url} alt={it.name} className="h-24 w-24 shrink-0 object-cover" />
+                  <div className="min-w-0 flex-1 p-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className={it.food_type === "veg" || it.food_type === "jain" ? "veg-dot" : "nonveg-dot"} />
+                      <span className="truncate text-sm font-medium">{it.name}</span>
+                    </div>
+                    {it.description && <div className="line-clamp-2 text-[11px] text-muted-foreground">{it.description}</div>}
+                    <div className="mt-1 text-[11px] text-muted-foreground">{it.calories > 0 ? `${it.calories} kcal · ` : ""}P {it.protein_g}g</div>
+                    <div className="mt-1 text-sm font-semibold text-primary">₹{Number(it.price_inr).toFixed(0)}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : ingredients.length === 0 ? (
+          <p className="p-4 text-center text-sm text-muted-foreground">No ingredients to build with yet — add some in Admin (kind = ingredient).</p>
+        ) : (
+          <div className="space-y-4">
+            {byRole.map((g) => (
+              <div key={g.role}>
+                <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{ROLE_LABEL[g.role]}</div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {g.list.map((it: any) => {
+                    const on = sel.includes(it.id);
+                    return (
+                      <button key={it.id} onClick={() => toggle(it.id)}
+                        className={`flex items-center gap-2 rounded-lg border p-2 text-left transition ${on ? "border-primary bg-primary/5" : "hover:border-primary/50"}`}>
+                        <MealImage path={it.image_url} alt={it.name} className="h-9 w-9 shrink-0 rounded object-cover" />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium">{it.name}</div>
+                          <div className="text-[10px] text-muted-foreground">₹{Number(it.price_inr).toFixed(0)}</div>
+                        </div>
+                        {on ? <Check className="h-4 w-4 shrink-0 text-primary" /> : <PlusIcon className="h-4 w-4 shrink-0 text-muted-foreground" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            <div className="sticky bottom-0 -mx-1 flex items-center justify-between gap-3 border-t bg-background pt-3">
+              <div className="text-sm"><span className="font-semibold">{sel.length}</span> item{sel.length === 1 ? "" : "s"} · <span className="font-semibold">₹{selTotal.toFixed(0)}</span></div>
+              <div className="flex gap-2">
+                {sel.length > 0 && <Button size="sm" variant="ghost" onClick={() => setSel([])}>Clear</Button>}
+                <Button size="sm" onClick={() => { onPick(sel); setOpen(false); }} disabled={sel.length === 0}>Save bowl</Button>
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
