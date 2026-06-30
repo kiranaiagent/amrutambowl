@@ -7,9 +7,10 @@ import { MealImage } from "@/components/MealImage";
 import { PlanCard } from "@/components/PlanCard";
 import {
   Phone, ChefHat, Dumbbell, Star, Salad, Flame, Leaf,
-  Users, ArrowRight, Plus, Target,
+  Users, ArrowRight, Target,
 } from "lucide-react";
 import { BuildBowlCard } from "@/components/BuildBowlCard";
+import { QuickCustomize } from "@/components/QuickCustomize";
 import { Reveal } from "@/components/Reveal";
 import { useSiteSettings } from "@/lib/settings";
 
@@ -208,9 +209,9 @@ function Home() {
                         )}
                       </div>
                     )}
-                    <Link to="/bowl" className="mt-auto flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:shadow-md">
-                      <Plus className="h-4 w-4" /> Customise &amp; Add
-                    </Link>
+                    <div className="mt-auto">
+                      <QuickCustomize item={it} recipe={recipe} triggerClassName="flex w-full items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:shadow-md" />
+                    </div>
                   </div>
                 </div>
                 </Reveal>

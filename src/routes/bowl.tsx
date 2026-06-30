@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Sparkles, Trash2, ChevronDown, CalendarDays, ClipboardList, UtensilsCrossed, Check, Plus as PlusIcon } from "lucide-react";
 
@@ -114,6 +114,34 @@ function BowlPage() {
       return next;
     });
   }, [deliveries.length]);
+
+  // Seed a single bowl (+ add-ons) when arriving from a menu card's "Add to bowl".
+  // Applied once the schedule's deliveries exist — fills every slot with the combo.
+  const seedBowlRef = useRef<{ bowlId: string; addonIds: string[] } | null>(null);
+  const [seedBowlPending, setSeedBowlPending] = useState(false);
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("amrutam.bowl.seedBowl");
+      if (!raw) return;
+      sessionStorage.removeItem("amrutam.bowl.seedBowl");
+      seedBowlRef.current = JSON.parse(raw);
+      setSeedBowlPending(true);
+    } catch {}
+  }, []);
+  useEffect(() => {
+    if (!seedBowlPending || !seedBowlRef.current || deliveries.length === 0) return;
+    const { bowlId, addonIds } = seedBowlRef.current;
+    const combo = [bowlId, ...(addonIds ?? [])].filter(Boolean);
+    setPicks(() => {
+      const next: Record<string, string[]> = {};
+      deliveries.forEach((d) => { next[`${d.date}|${d.slot}`] = combo; });
+      return next;
+    });
+    setOpenStep(3);
+    setSeedBowlPending(false);
+    seedBowlRef.current = null;
+    toast.success("Bowl added to every delivery — tweak your schedule or any plate below.");
+  }, [seedBowlPending, deliveries]);
 
   // Seed config from a plan when arriving via "Build a Bowl using this plan".
   useEffect(() => {
@@ -331,9 +359,13 @@ function BowlPage() {
                 const ids = picks[key] ?? [];
                 const chosen = ids.map((id) => menuById.get(id)).filter(Boolean) as any[];
                 const slotPrice = chosen.reduce((s, m) => s + Number(m.price_inr || 0), 0);
-                const isSignature = chosen.length === 1 && chosen[0].kind === "bowl";
-                const macro = isSignature && (chosen[0].calories > 0 || chosen[0].protein_g > 0)
-                  ? [chosen[0].calories > 0 ? `${chosen[0].calories} kcal` : null, chosen[0].protein_g > 0 ? `${chosen[0].protein_g}g protein` : null].filter(Boolean).join(" · ")
+                const bowlsIn = chosen.filter((m) => m.kind === "bowl");
+                const addonsIn = chosen.filter((m) => m.is_addon);
+                // A signature bowl, optionally with add-ons (beverage/snack), reads as the bowl.
+                const head = bowlsIn[0];
+                const isSignature = bowlsIn.length === 1 && bowlsIn.length + addonsIn.length === chosen.length;
+                const macro = isSignature && (head.calories > 0 || head.protein_g > 0)
+                  ? [head.calories > 0 ? `${head.calories} kcal` : null, head.protein_g > 0 ? `${head.protein_g}g protein` : null].filter(Boolean).join(" · ")
                   : null;
                 return (
                   <div key={key} className={`rounded-xl border p-3 transition ${chosen.length ? "bg-secondary/20" : "border-dashed"}`}>
@@ -346,13 +378,16 @@ function BowlPage() {
                         <div className="flex h-12 items-center text-sm text-muted-foreground italic">No bowl chosen yet</div>
                       ) : isSignature ? (
                         <div className="flex items-center gap-2.5">
-                          <MealImage path={chosen[0].image_url} alt={chosen[0].name} className="h-12 w-12 rounded-lg object-cover shrink-0" />
+                          <MealImage path={head.image_url} alt={head.name} className="h-12 w-12 rounded-lg object-cover shrink-0" />
                           <div className="min-w-0">
                             <div className="font-medium text-sm leading-tight flex items-center gap-1.5">
-                              <span className={chosen[0].food_type === "veg" || chosen[0].food_type === "jain" ? "veg-dot" : "nonveg-dot"} />
-                              <span className="truncate">{chosen[0].name}</span>
+                              <span className={head.food_type === "veg" || head.food_type === "jain" ? "veg-dot" : "nonveg-dot"} />
+                              <span className="truncate">{head.name}</span>
                             </div>
                             {macro && <div className="text-[11px] text-muted-foreground mt-0.5">{macro}</div>}
+                            {addonsIn.length > 0 && (
+                              <div className="mt-0.5 line-clamp-1 text-[11px] text-primary">+ {addonsIn.map((m) => m.name).join(", ")}</div>
+                            )}
                           </div>
                         </div>
                       ) : (
