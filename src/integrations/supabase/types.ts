@@ -14,12 +14,55 @@ export type Database = {
   }
   public: {
     Tables: {
+      bowl_components: {
+        Row: {
+          bowl_id: string
+          created_at: string
+          id: string
+          ingredient_id: string
+          is_default: boolean
+          quantity: number
+        }
+        Insert: {
+          bowl_id: string
+          created_at?: string
+          id?: string
+          ingredient_id: string
+          is_default?: boolean
+          quantity?: number
+        }
+        Update: {
+          bowl_id?: string
+          created_at?: string
+          id?: string
+          ingredient_id?: string
+          is_default?: boolean
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bowl_components_bowl_id_fkey"
+            columns: ["bowl_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bowl_components_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_items: {
         Row: {
           allergens: string[] | null
           calories: number
           carbs_g: number
           category: string | null
+          component_role: string | null
           created_at: string
           description: string | null
           fat_g: number
@@ -29,7 +72,9 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          is_addon: boolean
           is_available: boolean
+          kind: string
           meal_type: Database["public"]["Enums"]["meal_type"]
           name: string
           price_inr: number
@@ -45,6 +90,7 @@ export type Database = {
           calories?: number
           carbs_g?: number
           category?: string | null
+          component_role?: string | null
           created_at?: string
           description?: string | null
           fat_g?: number
@@ -54,7 +100,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_addon?: boolean
           is_available?: boolean
+          kind?: string
           meal_type?: Database["public"]["Enums"]["meal_type"]
           name: string
           price_inr?: number
@@ -70,6 +118,7 @@ export type Database = {
           calories?: number
           carbs_g?: number
           category?: string | null
+          component_role?: string | null
           created_at?: string
           description?: string | null
           fat_g?: number
@@ -79,7 +128,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_addon?: boolean
           is_available?: boolean
+          kind?: string
           meal_type?: Database["public"]["Enums"]["meal_type"]
           name?: string
           price_inr?: number
