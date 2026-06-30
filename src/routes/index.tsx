@@ -46,7 +46,9 @@ function Home() {
   const featured = useQuery({
     queryKey: ["home-meals"],
     queryFn: async () => {
-      const { data } = await supabase.from("menu_items").select("*").eq("status", "active")
+      const { data } = await supabase.from("menu_items")
+        .select("*, bowl_components!bowl_components_bowl_id_fkey(ingredient:menu_items!bowl_components_ingredient_id_fkey(name))")
+        .eq("status", "active")
         .order("calories", { ascending: false }).limit(16);
       const all = data ?? [];
       // Prefer sellable Bowls; fall back to whatever's active if none are tagged yet.
@@ -169,6 +171,7 @@ function Home() {
               const cals = Number(it.calories) || 0;
               const protein = Number(it.protein_g) || 0;
               const isVeg = it.food_type === "veg" || it.food_type === "jain";
+              const recipe = (it.bowl_components ?? []).map((c: any) => c.ingredient?.name).filter(Boolean).join(" · ");
               const badge = it.is_popular
                 ? { label: "Bestseller", cls: "bg-[var(--color-saffron)] text-[var(--color-saffron-foreground)]" }
                 : protein >= 25
@@ -194,8 +197,8 @@ function Home() {
                       <span className={isVeg ? "veg-dot shrink-0" : "nonveg-dot shrink-0"} aria-hidden />
                       <h3 className="font-semibold leading-tight line-clamp-1">{it.name}</h3>
                     </div>
-                    {it.description && (
-                      <p className="text-xs leading-snug text-muted-foreground line-clamp-2">{it.description}</p>
+                    {(recipe || it.description) && (
+                      <p className="text-xs leading-snug text-muted-foreground line-clamp-2">{recipe || it.description}</p>
                     )}
                     {cals > 0 && (
                       <div className="flex flex-wrap gap-1.5">
