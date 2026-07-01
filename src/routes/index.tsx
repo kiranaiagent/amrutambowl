@@ -259,6 +259,37 @@ function Home() {
         </section>
       )}
 
+      {/* MyAmrutam Rewards — Panera-style loyalty band */}
+      <section className="mx-auto max-w-6xl px-4 py-10 md:py-14">
+        <div className="relative overflow-hidden rounded-[2rem] border shadow-[var(--shadow-warm)]" style={{ background: "var(--gradient-hero)" }}>
+          <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full opacity-20 blur-3xl" style={{ background: "var(--color-saffron)" }} />
+          <div className="relative grid gap-6 p-8 md:grid-cols-[1.4fr_1fr] md:items-center md:p-12" style={{ color: "var(--color-primary-foreground)" }}>
+            <div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] backdrop-blur">
+                <Star className="h-3.5 w-3.5 fill-current" /> MyAmrutam Rewards
+              </span>
+              <h2 className="mt-3 font-display text-3xl md:text-4xl font-bold leading-tight">Your first bowl is on us — almost.</h2>
+              <p className="mt-2 max-w-lg text-sm md:text-base opacity-90">Use code <span className="font-mono font-bold text-white">WELCOME10</span> at checkout for 10% off your first subscription. Free swaps. Skip anytime.</p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link to="/plans" className="inline-flex items-center gap-1.5 rounded-full bg-background px-6 py-3 text-sm font-semibold text-primary shadow transition hover:-translate-y-0.5 hover:shadow-lg">
+                  Claim your offer <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link to="/bowl" className="inline-flex items-center gap-1.5 rounded-full border-2 border-white/60 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white hover:text-primary">
+                  <ChefHat className="h-4 w-4" /> Build a Bowl
+                </Link>
+              </div>
+            </div>
+            <div className="relative hidden md:block">
+              <div className="rounded-2xl border border-white/25 bg-white/10 p-5 backdrop-blur">
+                <div className="text-xs font-bold uppercase tracking-wider opacity-80">Promo code</div>
+                <div className="mt-1 font-mono text-3xl font-black">WELCOME10</div>
+                <div className="mt-3 text-xs opacity-90">10% off · first order · limited time</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA band */}
       <section className="py-12 md:py-14 text-center" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
         <div className="mx-auto max-w-3xl px-4">
