@@ -37,34 +37,37 @@
   --color-saffron: var(--saffron);
   --color-saffron-foreground: var(--saffron-foreground);
   --color-terracotta: var(--terracotta);
+  --color-paprika: var(--paprika);
+  --color-paprika-foreground: var(--paprika-foreground);
   --color-cream: var(--cream);
+  --color-cream-deep: var(--cream-deep);
   --font-display: "Fraunces", "Georgia", serif;
   --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
 :root {
-  --radius: 1rem;
-  /* Earthy-premium: warm cream paper, deep leaf green, saffron/terracotta warmth.
-     Tuned toward bowlify's cozy cream + forest-green palette. */
-  --background: oklch(0.975 0.02 88);
-  --foreground: oklch(0.24 0.03 150);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.03 150);
+  --radius: 1.25rem;
+  /* Panera-inspired: warm cream paper, deep forest green primary, brick/paprika warmth.
+     Cozy bakery-cafe palette, editorial and food-forward. */
+  --background: oklch(0.97 0.022 82);
+  --foreground: oklch(0.22 0.03 60);
+  --card: oklch(0.995 0.008 85);
+  --card-foreground: oklch(0.22 0.03 60);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.24 0.03 150);
-  --primary: oklch(0.46 0.115 153);
-  --primary-foreground: oklch(0.99 0.012 90);
-  --secondary: oklch(0.95 0.03 150);
-  --secondary-foreground: oklch(0.32 0.06 152);
-  --muted: oklch(0.96 0.015 95);
-  --muted-foreground: oklch(0.5 0.025 130);
-  --accent: oklch(0.93 0.04 80);
-  --accent-foreground: oklch(0.34 0.06 60);
-  --destructive: oklch(0.58 0.2 27);
+  --popover-foreground: oklch(0.22 0.03 60);
+  --primary: oklch(0.44 0.11 152);
+  --primary-foreground: oklch(0.985 0.014 88);
+  --secondary: oklch(0.94 0.03 78);
+  --secondary-foreground: oklch(0.3 0.06 55);
+  --muted: oklch(0.955 0.018 82);
+  --muted-foreground: oklch(0.46 0.03 60);
+  --accent: oklch(0.92 0.05 62);
+  --accent-foreground: oklch(0.34 0.09 45);
+  --destructive: oklch(0.55 0.2 27);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.9 0.018 95);
-  --input: oklch(0.92 0.015 100);
+  --border: oklch(0.89 0.02 80);
+  --input: oklch(0.92 0.018 82);
   --ring: oklch(0.5 0.11 150);
 
   --veg: oklch(0.6 0.18 145);
@@ -73,15 +76,20 @@
   --carbs: oklch(0.72 0.16 80);
   --fat: oklch(0.7 0.15 200);
 
-  /* Warm brand accents */
-  --saffron: oklch(0.76 0.14 68);
+  /* Warm brand accents (Panera-esque bakery cafe) */
+  --saffron: oklch(0.78 0.14 68);
   --saffron-foreground: oklch(0.3 0.07 55);
-  --terracotta: oklch(0.62 0.15 42);
-  --cream: oklch(0.97 0.025 85);
+  --terracotta: oklch(0.6 0.17 38);
+  --paprika: oklch(0.55 0.19 32);
+  --paprika-foreground: oklch(0.99 0.012 60);
+  --cream: oklch(0.965 0.028 82);
+  --cream-deep: oklch(0.93 0.04 78);
 
-  --gradient-hero: linear-gradient(135deg, oklch(0.44 0.11 153) 0%, oklch(0.54 0.13 135) 55%, oklch(0.7 0.13 75) 100%);
-  --shadow-soft: 0 10px 40px -12px oklch(0.4 0.08 120 / 0.22);
-  --shadow-card: 0 4px 20px -8px oklch(0.3 0.05 150 / 0.14);
+  --gradient-hero: linear-gradient(135deg, oklch(0.42 0.11 152) 0%, oklch(0.5 0.12 138) 55%, oklch(0.68 0.14 72) 100%);
+  --gradient-warm: linear-gradient(160deg, oklch(0.96 0.035 82) 0%, oklch(0.92 0.055 68) 100%);
+  --shadow-soft: 0 14px 44px -14px oklch(0.35 0.08 60 / 0.22);
+  --shadow-card: 0 6px 22px -10px oklch(0.3 0.05 60 / 0.18);
+  --shadow-warm: 0 20px 60px -22px oklch(0.5 0.18 40 / 0.35);
 }
 
 .dark {

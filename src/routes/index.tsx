@@ -76,47 +76,85 @@ function Home() {
       <SiteHeader />
       <h1 className="sr-only">Amrutam Bowl — Healthy Meal Subscriptions in India</h1>
 
-      {/* Hero */}
-      <section className="section-fade relative overflow-hidden">
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-          <div className="float-slow absolute -top-20 -right-16 h-72 w-72 rounded-full opacity-40 blur-3xl" style={{ background: "var(--color-saffron)" }} />
-          <div className="float-slower absolute top-24 -left-24 h-72 w-72 rounded-full opacity-25 blur-3xl" style={{ background: "var(--color-primary)" }} />
+      {/* Hero — Panera-inspired warm editorial */}
+      <section className="relative overflow-hidden" style={{ background: "var(--gradient-warm)" }}>
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+          <div className="float-slow absolute -top-24 -right-16 h-80 w-80 rounded-full opacity-40 blur-3xl" style={{ background: "var(--color-saffron)" }} />
+          <div className="float-slower absolute -bottom-24 -left-16 h-80 w-80 rounded-full opacity-30 blur-3xl" style={{ background: "var(--color-primary)" }} />
         </div>
-        <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-8 md:grid-cols-2 md:py-12">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 md:grid-cols-[1.05fr_1fr] md:py-20">
           <Reveal>
-            <h2 className="font-display text-3xl md:text-5xl font-bold leading-[1.05] tracking-tight">
-              Real Food, Made for <span className="text-primary">Your Goals</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-paprika)]/12 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[var(--color-paprika)]">
+              <Flame className="h-3.5 w-3.5" /> Warm · Wholesome · Fresh Daily
+            </span>
+            <h2 className="mt-4 font-display text-4xl md:text-6xl font-bold leading-[1.02] tracking-tight">
+              Real food.<br/>
+              <span className="text-primary">Made with love,</span><br/>
+              delivered warm.
             </h2>
-            <p className="mt-3 max-w-md text-muted-foreground md:text-lg">
-              Every bowl has a purpose — wholesome, protein-rich meals crafted fresh for you.
+            <p className="mt-4 max-w-lg text-base md:text-lg text-muted-foreground">
+              Chef-crafted bowls, salads and thalis — clean ingredients, honest macros, at your door every day.
             </p>
-            <div className="mt-6">
-              <Link to="/bowl" className="inline-flex items-center gap-1.5 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:shadow-lg">
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link to="/plans" className="inline-flex items-center gap-1.5 rounded-full bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:shadow-lg">
+                Explore Meal Plans <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link to="/bowl" className="inline-flex items-center gap-1.5 rounded-full border-2 border-primary bg-card px-7 py-3.5 text-sm font-semibold text-primary transition hover:bg-primary hover:text-primary-foreground">
                 <ChefHat className="h-4 w-4" /> Build My Own Bowl
               </Link>
             </div>
-          </Reveal>
-          <Reveal delay={120} className="relative mx-auto w-full max-w-xs sm:max-w-sm">
-            <div className="float-slow overflow-hidden rounded-[2rem] border bg-card p-4 shadow-[var(--shadow-soft)]">
-              <img src="/brand/amrutam-bowl.jpg" alt="A wholesome Amrutam bowl" className="aspect-square w-full rounded-2xl object-cover" />
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5"><Leaf className="h-3.5 w-3.5 text-primary" /> FSSAI certified</span>
+              <span className="inline-flex items-center gap-1.5"><Flame className="h-3.5 w-3.5 text-[var(--color-terracotta)]" /> Never frozen</span>
+              <span className="inline-flex items-center gap-1.5"><Star className="h-3.5 w-3.5 text-[var(--color-saffron)] fill-current" /> Loved by 2,400+ eaters</span>
             </div>
-            <span className="float-slower absolute -left-2 top-8 inline-flex items-center gap-1 rounded-full border bg-card px-3 py-1.5 text-xs font-semibold shadow-[var(--shadow-card)]">
-              <Flame className="h-3.5 w-3.5 text-[var(--color-terracotta)]" /> Fresh daily
+          </Reveal>
+          <Reveal delay={140} className="relative mx-auto w-full max-w-md">
+            <div className="float-slow relative overflow-hidden rounded-[2.5rem] border-4 border-card bg-card shadow-[var(--shadow-warm)]">
+              <img src="/brand/amrutam-bowl.jpg" alt="A warm, wholesome Amrutam bowl" className="aspect-square w-full object-cover" />
+              <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/25 to-transparent" />
+            </div>
+            <span className="float-slower absolute -left-3 top-8 inline-flex items-center gap-1.5 rounded-full border bg-card px-3.5 py-2 text-xs font-bold shadow-[var(--shadow-card)]">
+              <Dumbbell className="h-3.5 w-3.5 text-primary" /> 28g protein
             </span>
-            <span className="float-slow absolute -right-2 bottom-12 inline-flex items-center gap-1 rounded-full border bg-card px-3 py-1.5 text-xs font-semibold shadow-[var(--shadow-card)]">
-              <Dumbbell className="h-3.5 w-3.5 text-primary" /> High protein
+            <span className="float-slow absolute -right-3 bottom-14 inline-flex items-center gap-1.5 rounded-full bg-[var(--color-paprika)] px-3.5 py-2 text-xs font-bold text-[var(--color-paprika-foreground)] shadow-[var(--shadow-card)]">
+              <Flame className="h-3.5 w-3.5" /> Served warm
             </span>
-            <span className="float-slower absolute right-6 -top-2 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow">
-              <Leaf className="h-3.5 w-3.5" /> Macro-balanced
+            <span className="float-slower absolute -top-3 right-8 inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-[var(--shadow-card)]">
+              <Leaf className="h-3.5 w-3.5" /> Real ingredients
             </span>
           </Reveal>
         </div>
       </section>
 
+      {/* Craveable Categories — Panera-style category strip */}
+      <section className="border-y bg-card">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-px overflow-hidden md:grid-cols-4" style={{ background: "var(--color-border)" }}>
+          {[
+            { to: "/plans", label: "Meal Plans", sub: "Subscribe & save", Icon: Salad, tint: "var(--color-primary)" },
+            { to: "/bowl", label: "Build a Bowl", sub: "Your rules", Icon: ChefHat, tint: "var(--color-paprika)" },
+            { to: "/plans", label: "High Protein", sub: "25g+ per meal", Icon: Dumbbell, tint: "var(--color-terracotta)", search: { goal: "muscle-gain" as const } },
+            { to: "/plans", label: "Light & Lean", sub: "Under 450 kcal", Icon: Leaf, tint: "var(--color-saffron)", search: { goal: "weight-loss" as const } },
+          ].map((c) => (
+            <Link key={c.label} to={c.to} search={c.search as any} className="group flex items-center gap-3 bg-card px-5 py-5 transition hover:bg-secondary/60">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-primary-foreground" style={{ background: c.tint }}>
+                <c.Icon className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <div className="font-display text-base font-semibold leading-tight">{c.label}</div>
+                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{c.sub}</div>
+              </div>
+              <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* Build My Own Bowl */}
-      <section className="mx-auto max-w-6xl px-4 pb-8">
+      <section className="mx-auto max-w-6xl px-4 py-10 md:py-12">
         <BuildBowlCard />
       </section>
+
 
       {/* Bowl Plans */}
       {(plans.isLoading || (plans.data?.length ?? 0) > 0) && (
@@ -220,6 +258,37 @@ function Home() {
           </div>
         </section>
       )}
+
+      {/* MyAmrutam Rewards — Panera-style loyalty band */}
+      <section className="mx-auto max-w-6xl px-4 py-10 md:py-14">
+        <div className="relative overflow-hidden rounded-[2rem] border shadow-[var(--shadow-warm)]" style={{ background: "var(--gradient-hero)" }}>
+          <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full opacity-20 blur-3xl" style={{ background: "var(--color-saffron)" }} />
+          <div className="relative grid gap-6 p-8 md:grid-cols-[1.4fr_1fr] md:items-center md:p-12" style={{ color: "var(--color-primary-foreground)" }}>
+            <div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] backdrop-blur">
+                <Star className="h-3.5 w-3.5 fill-current" /> MyAmrutam Rewards
+              </span>
+              <h2 className="mt-3 font-display text-3xl md:text-4xl font-bold leading-tight">Your first bowl is on us — almost.</h2>
+              <p className="mt-2 max-w-lg text-sm md:text-base opacity-90">Use code <span className="font-mono font-bold text-white">WELCOME10</span> at checkout for 10% off your first subscription. Free swaps. Skip anytime.</p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link to="/plans" className="inline-flex items-center gap-1.5 rounded-full bg-background px-6 py-3 text-sm font-semibold text-primary shadow transition hover:-translate-y-0.5 hover:shadow-lg">
+                  Claim your offer <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link to="/bowl" className="inline-flex items-center gap-1.5 rounded-full border-2 border-white/60 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white hover:text-primary">
+                  <ChefHat className="h-4 w-4" /> Build a Bowl
+                </Link>
+              </div>
+            </div>
+            <div className="relative hidden md:block">
+              <div className="rounded-2xl border border-white/25 bg-white/10 p-5 backdrop-blur">
+                <div className="text-xs font-bold uppercase tracking-wider opacity-80">Promo code</div>
+                <div className="mt-1 font-mono text-3xl font-black">WELCOME10</div>
+                <div className="mt-3 text-xs opacity-90">10% off · first order · limited time</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* CTA band */}
       <section className="py-12 md:py-14 text-center" style={{ background: "var(--color-primary)", color: "var(--color-primary-foreground)" }}>
