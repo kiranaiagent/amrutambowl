@@ -37,7 +37,10 @@
   --color-saffron: var(--saffron);
   --color-saffron-foreground: var(--saffron-foreground);
   --color-terracotta: var(--terracotta);
+  --color-paprika: var(--paprika);
+  --color-paprika-foreground: var(--paprika-foreground);
   --color-cream: var(--cream);
+  --color-cream-deep: var(--cream-deep);
   --font-display: "Fraunces", "Georgia", serif;
   --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
