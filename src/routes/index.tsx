@@ -77,7 +77,7 @@ function Home() {
       <h1 className="sr-only">Amrutam Bowl — Healthy Meal Subscriptions in India</h1>
 
       {/* Hero */}
-      <section className="relative overflow-hidden">
+      <section className="section-fade relative overflow-hidden">
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="float-slow absolute -top-20 -right-16 h-72 w-72 rounded-full opacity-40 blur-3xl" style={{ background: "var(--color-saffron)" }} />
           <div className="float-slower absolute top-24 -left-24 h-72 w-72 rounded-full opacity-25 blur-3xl" style={{ background: "var(--color-primary)" }} />
@@ -148,7 +148,7 @@ function Home() {
 
       {/* Explore Our Menu — Bowlify-style item cards */}
       {(featured.isLoading || (featured.data?.length ?? 0) > 0) && (
-        <section className="mx-auto max-w-6xl px-4 py-6 md:py-10">
+        <section id="menu" className="mx-auto max-w-6xl px-4 py-6 md:py-10 scroll-mt-24">
           <Reveal className="flex items-end justify-between flex-wrap gap-2">
             <div>
               <span className="text-xs font-semibold uppercase tracking-wide text-primary">Featured</span>
@@ -312,7 +312,7 @@ function Home() {
       </section>
 
       {/* Contact / questions */}
-      <section className="bg-secondary/30 py-12 border-t">
+      <section id="contact" className="bg-secondary/30 py-12 border-t scroll-mt-24">
         <div className="mx-auto max-w-3xl px-4 text-center">
           <h2 className="font-display text-2xl md:text-3xl font-bold">Questions? Talk to Us</h2>
           <p className="mt-2 text-sm text-muted-foreground">We're happy to help with plans, delivery, dietary preferences, or anything else.</p>
