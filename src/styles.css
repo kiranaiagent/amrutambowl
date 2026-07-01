@@ -44,27 +44,27 @@
 }
 
 :root {
-  --radius: 1rem;
-  /* Earthy-premium: warm cream paper, deep leaf green, saffron/terracotta warmth.
-     Tuned toward bowlify's cozy cream + forest-green palette. */
-  --background: oklch(0.975 0.02 88);
-  --foreground: oklch(0.24 0.03 150);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.03 150);
+  --radius: 1.25rem;
+  /* Panera-inspired: warm cream paper, deep forest green primary, brick/paprika warmth.
+     Cozy bakery-cafe palette, editorial and food-forward. */
+  --background: oklch(0.97 0.022 82);
+  --foreground: oklch(0.22 0.03 60);
+  --card: oklch(0.995 0.008 85);
+  --card-foreground: oklch(0.22 0.03 60);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.24 0.03 150);
-  --primary: oklch(0.46 0.115 153);
-  --primary-foreground: oklch(0.99 0.012 90);
-  --secondary: oklch(0.95 0.03 150);
-  --secondary-foreground: oklch(0.32 0.06 152);
-  --muted: oklch(0.96 0.015 95);
-  --muted-foreground: oklch(0.5 0.025 130);
-  --accent: oklch(0.93 0.04 80);
-  --accent-foreground: oklch(0.34 0.06 60);
-  --destructive: oklch(0.58 0.2 27);
+  --popover-foreground: oklch(0.22 0.03 60);
+  --primary: oklch(0.44 0.11 152);
+  --primary-foreground: oklch(0.985 0.014 88);
+  --secondary: oklch(0.94 0.03 78);
+  --secondary-foreground: oklch(0.3 0.06 55);
+  --muted: oklch(0.955 0.018 82);
+  --muted-foreground: oklch(0.46 0.03 60);
+  --accent: oklch(0.92 0.05 62);
+  --accent-foreground: oklch(0.34 0.09 45);
+  --destructive: oklch(0.55 0.2 27);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.9 0.018 95);
-  --input: oklch(0.92 0.015 100);
+  --border: oklch(0.89 0.02 80);
+  --input: oklch(0.92 0.018 82);
   --ring: oklch(0.5 0.11 150);
 
   --veg: oklch(0.6 0.18 145);
