@@ -1,6 +1,15 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
-export type CartLine = { id: string; name: string; price_inr: number; image_url: string | null; qty: number };
+export type CartLine = {
+  id: string;
+  name: string;
+  price_inr: number;
+  image_url: string | null;
+  qty: number;
+  /** Human-readable customisations (e.g. "+ Mint Yogurt · + Chia Water"). */
+  note?: string;
+};
+
 type CartCtx = {
   lines: CartLine[];
   add: (l: Omit<CartLine, "qty">, qty?: number) => void;

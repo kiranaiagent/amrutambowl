@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useCart } from "@/lib/cart";
-import { ShoppingBag, ChefHat, Menu as MenuIcon, X } from "lucide-react";
+import { ShoppingBag, Salad, Menu as MenuIcon, X } from "lucide-react";
 import { useState } from "react";
 
 const logoUrl = "/brand/amrutam-bowl.jpg";
@@ -10,7 +10,8 @@ const logoUrl = "/brand/amrutam-bowl.jpg";
 const NAV: { to: string; label: string; hash?: string; exact?: boolean }[] = [
   { to: "/", label: "Home", exact: true },
   { to: "/plans", label: "Bowl Plans" },
-  { to: "/", label: "Menu", hash: "menu" },
+  { to: "/bowl", label: "Menu" },
+  { to: "/rewards", label: "Rewards" },
   { to: "/", label: "Contact", hash: "contact" },
 ];
 
@@ -38,13 +39,13 @@ export function SiteHeader() {
     <Link to="/auth" className="rounded-full px-3.5 py-2 text-sm font-medium text-foreground/70 transition hover:bg-secondary hover:text-foreground">Sign in</Link>
   );
 
-  const buildCta = (
+  const orderCta = (
     <Link
       to="/bowl"
       className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
       activeProps={{ className: "ring-2 ring-primary/40" }}
     >
-      <ChefHat className="h-4 w-4" /> Build My Own Bowl
+      <Salad className="h-4 w-4" /> Order Now
     </Link>
   );
 
@@ -80,7 +81,7 @@ export function SiteHeader() {
           )}
           {accountLink}
           {cartLink}
-          {buildCta}
+          {orderCta}
         </div>
 
         {/* Mobile: cart + hamburger */}
@@ -127,7 +128,7 @@ export function SiteHeader() {
               onClick={() => setMobileOpen(false)}
               className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"
             >
-              <ChefHat className="h-4 w-4" /> Build My Own Bowl
+              <Salad className="h-4 w-4" /> Order Now
             </Link>
           </nav>
         </div>
