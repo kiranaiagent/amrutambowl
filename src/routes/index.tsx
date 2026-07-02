@@ -189,7 +189,7 @@ function Home() {
               <span className="text-xs font-semibold uppercase tracking-wide text-primary">Featured</span>
               <h2 className="font-display text-2xl md:text-3xl font-bold">Explore Our Menu</h2>
             </div>
-            <Link to="/bowl" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"><ChefHat className="h-4 w-4" /> Build My Own Bowl</Link>
+            <Link to="/bowl" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"><Salad className="h-4 w-4" /> Build My Own Bowl</Link>
           </Reveal>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {featured.isLoading
@@ -272,7 +272,7 @@ function Home() {
                   Claim your offer <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link to="/bowl" className="inline-flex items-center gap-1.5 rounded-full border-2 border-white/60 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white hover:text-primary">
-                  <ChefHat className="h-4 w-4" /> Build a Bowl
+                  <Salad className="h-4 w-4" /> Build a Bowl
                 </Link>
               </div>
             </div>
@@ -297,7 +297,7 @@ function Home() {
               Explore Plans <ArrowRight className="h-4 w-4" />
             </Link>
             <Link to="/bowl" className="inline-flex items-center gap-1.5 rounded-full border-2 border-primary-foreground/70 px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary-foreground hover:text-primary">
-              <ChefHat className="h-4 w-4" /> Build My Own Bowl
+              <Salad className="h-4 w-4" /> Build My Own Bowl
             </Link>
           </div>
         </div>
@@ -321,7 +321,7 @@ function Home() {
           </div>
           <div className="mt-6">
             <Link to="/bowl" className="inline-flex items-center gap-1.5 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:shadow-md">
-              <ChefHat className="h-4 w-4" /> Build My Own Bowl
+              <Salad className="h-4 w-4" /> Build My Own Bowl
             </Link>
           </div>
         </div>
