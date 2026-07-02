@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RewardsRouteImport } from './routes/rewards'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as BowlRouteImport } from './routes/bowl'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -32,6 +33,11 @@ import { Route as AuthenticatedAdminPincodeRequestsRouteImport } from './routes/
 import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenticated/admin/orders'
 import { Route as AuthenticatedAdminMenuRouteImport } from './routes/_authenticated/admin/menu'
 
+const RewardsRoute = RewardsRouteImport.update({
+  id: '/rewards',
+  path: '/rewards',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CartRoute = CartRouteImport.update({
   id: '/cart',
   path: '/cart',
@@ -154,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/bowl': typeof BowlRoute
   '/cart': typeof CartRoute
+  '/rewards': typeof RewardsRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/checkout': typeof AuthenticatedCheckoutRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/bowl': typeof BowlRoute
   '/cart': typeof CartRoute
+  '/rewards': typeof RewardsRoute
   '/account': typeof AuthenticatedAccountRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
   '/my-subscription': typeof AuthenticatedMySubscriptionRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/bowl': typeof BowlRoute
   '/cart': typeof CartRoute
+  '/rewards': typeof RewardsRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bowl'
     | '/cart'
+    | '/rewards'
     | '/account'
     | '/admin'
     | '/checkout'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bowl'
     | '/cart'
+    | '/rewards'
     | '/account'
     | '/checkout'
     | '/my-subscription'
@@ -272,6 +283,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bowl'
     | '/cart'
+    | '/rewards'
     | '/_authenticated/account'
     | '/_authenticated/admin'
     | '/_authenticated/checkout'
@@ -297,6 +309,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BowlRoute: typeof BowlRoute
   CartRoute: typeof CartRoute
+  RewardsRoute: typeof RewardsRoute
   OrderConfirmationIdRoute: typeof OrderConfirmationIdRoute
   PlansIdRoute: typeof PlansIdRoute
   PlansIndexRoute: typeof PlansIndexRoute
@@ -304,6 +317,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/rewards': {
+      id: '/rewards'
+      path: '/rewards'
+      fullPath: '/rewards'
+      preLoaderRoute: typeof RewardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cart': {
       id: '/cart'
       path: '/cart'
@@ -514,6 +534,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BowlRoute: BowlRoute,
   CartRoute: CartRoute,
+  RewardsRoute: RewardsRoute,
   OrderConfirmationIdRoute: OrderConfirmationIdRoute,
   PlansIdRoute: PlansIdRoute,
   PlansIndexRoute: PlansIndexRoute,

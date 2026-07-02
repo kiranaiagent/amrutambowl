@@ -6,10 +6,9 @@ import { Footer } from "@/components/Footer";
 import { MealImage } from "@/components/MealImage";
 import { PlanCard } from "@/components/PlanCard";
 import {
-  Phone, ChefHat, Dumbbell, Star, Salad, Flame, Leaf,
-  Users, ArrowRight, Target,
+  Phone, Salad, Dumbbell, Star, Flame, Leaf,
+  Users, ArrowRight, Target, Plus,
 } from "lucide-react";
-import { BuildBowlCard } from "@/components/BuildBowlCard";
 import { QuickCustomize } from "@/components/QuickCustomize";
 import { Reveal } from "@/components/Reveal";
 import { useSiteSettings } from "@/lib/settings";
@@ -96,11 +95,11 @@ function Home() {
               Chef-crafted bowls, salads and thalis — clean ingredients, honest macros, at your door every day.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link to="/plans" className="inline-flex items-center gap-1.5 rounded-full bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:shadow-lg">
-                Explore Meal Plans <ArrowRight className="h-4 w-4" />
+              <Link to="/bowl" className="inline-flex items-center gap-1.5 rounded-full bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:shadow-lg">
+                <Salad className="h-4 w-4" /> Order Now
               </Link>
-              <Link to="/bowl" className="inline-flex items-center gap-1.5 rounded-full border-2 border-primary bg-card px-7 py-3.5 text-sm font-semibold text-primary transition hover:bg-primary hover:text-primary-foreground">
-                <ChefHat className="h-4 w-4" /> Build My Own Bowl
+              <Link to="/plans" className="inline-flex items-center gap-1.5 rounded-full border-2 border-primary bg-card px-7 py-3.5 text-sm font-semibold text-primary transition hover:bg-primary hover:text-primary-foreground">
+                Explore Meal Plans <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
             <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
@@ -111,7 +110,7 @@ function Home() {
           </Reveal>
           <Reveal delay={140} className="relative mx-auto w-full max-w-md">
             <div className="float-slow relative overflow-hidden rounded-[2.5rem] border-4 border-card bg-card shadow-[var(--shadow-warm)]">
-              <img src="/brand/amrutam-bowl.jpg" alt="A warm, wholesome Amrutam bowl" className="aspect-square w-full object-cover" />
+              <img src="/brand/hero-bowl.jpg" alt="A vibrant, colourful Amrutam grain bowl overhead" width={1024} height={1024} className="aspect-square w-full object-cover" />
               <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/25 to-transparent" />
             </div>
             <span className="float-slower absolute -left-3 top-8 inline-flex items-center gap-1.5 rounded-full border bg-card px-3.5 py-2 text-xs font-bold shadow-[var(--shadow-card)]">
@@ -132,7 +131,7 @@ function Home() {
         <div className="mx-auto grid max-w-6xl grid-cols-2 gap-px overflow-hidden md:grid-cols-4" style={{ background: "var(--color-border)" }}>
           {[
             { to: "/plans", label: "Meal Plans", sub: "Subscribe & save", Icon: Salad, tint: "var(--color-primary)" },
-            { to: "/bowl", label: "Build a Bowl", sub: "Your rules", Icon: ChefHat, tint: "var(--color-paprika)" },
+            { to: "/bowl", label: "Browse Menu", sub: "Order à la carte", Icon: Plus, tint: "var(--color-paprika)" },
             { to: "/plans", label: "High Protein", sub: "25g+ per meal", Icon: Dumbbell, tint: "var(--color-terracotta)", search: { goal: "muscle-gain" as const } },
             { to: "/plans", label: "Light & Lean", sub: "Under 450 kcal", Icon: Leaf, tint: "var(--color-saffron)", search: { goal: "weight-loss" as const } },
           ].map((c) => (
@@ -150,10 +149,8 @@ function Home() {
         </div>
       </section>
 
-      {/* Build My Own Bowl */}
-      <section className="mx-auto max-w-6xl px-4 py-10 md:py-12">
-        <BuildBowlCard />
-      </section>
+      {/* (Old multi-step "Build a Bowl" wizard removed — the Menu route is now the primary order path.) */}
+
 
 
       {/* Bowl Plans */}
