@@ -1,4 +1,3 @@
-import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +5,8 @@ import { MealImage } from "@/components/MealImage";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Check, Flame, Leaf, Plus, X } from "lucide-react";
+import { useCart } from "@/lib/cart";
+import { toast } from "sonner";
 
 /**
  * Bowlify-style quick-customise sheet for a menu card.
@@ -21,7 +22,7 @@ export function QuickCustomize({
   recipe?: string;
   triggerClassName?: string;
 }) {
-  const nav = useNavigate();
+  const { add } = useCart();
   const [open, setOpen] = useState(false);
   const [sauceId, setSauceId] = useState<string | null>(null);
   const [addonIds, setAddonIds] = useState<string[]>([]);
@@ -58,20 +59,26 @@ export function QuickCustomize({
   const isVeg = item.food_type === "veg" || item.food_type === "jain";
   const basePrice = Number(item.price_inr) || 0;
   const extras = [sauceId, ...addonIds].filter(Boolean) as string[];
-  const total = basePrice + extras.reduce((s, id) => s + Number(addonById.get(id)?.price_inr || 0), 0);
+  const extrasPrice = extras.reduce((s, id) => s + Number(addonById.get(id)?.price_inr || 0), 0);
+  const total = basePrice + extrasPrice;
 
   const toggleAddon = (id: string) =>
     setAddonIds((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
 
-  const addToBowl = () => {
-    try {
-      sessionStorage.setItem(
-        "amrutam.bowl.seedBowl",
-        JSON.stringify({ bowlId: item.id, addonIds: extras }),
-      );
-    } catch { /* sessionStorage may be unavailable */ }
+  const addToCart = () => {
+    const extraNames = extras.map((id) => addonById.get(id)?.name).filter(Boolean);
+    const lineId = extras.length
+      ? `${item.id}#${[...extras].sort().join(",")}`
+      : item.id;
+    add({
+      id: lineId,
+      name: item.name,
+      price_inr: total,
+      image_url: item.image_url ?? null,
+      note: extraNames.length ? `+ ${extraNames.join(" · + ")}` : undefined,
+    });
     setOpen(false);
-    nav({ to: "/bowl" });
+    toast.success(`${item.name} added to your bowl`);
   };
 
   return (
@@ -186,8 +193,8 @@ export function QuickCustomize({
 
           {/* Sticky action bar */}
           <div className="border-t bg-background p-3">
-            <Button onClick={addToBowl} size="lg" className="h-12 w-full rounded-full text-base">
-              Add to bowl · ₹{total.toFixed(0)}
+            <Button onClick={addToCart} size="lg" className="h-12 w-full rounded-full text-base">
+              Add to cart · ₹{total.toFixed(0)}
             </Button>
           </div>
         </DialogContent>
